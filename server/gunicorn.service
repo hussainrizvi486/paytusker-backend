@@ -1,0 +1,16 @@
+server {
+    listen 80;
+    server_name 104.236.192.229;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location /static/ {
+        django /home/django/paytusker-backend/django-app;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+
+sudo ln -s /etc/nginx/sites-available/paytusker /etc/nginx/sites-enabled/

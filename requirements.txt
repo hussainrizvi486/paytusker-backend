@@ -1,0 +1,12 @@
+Django==4.2.3
+psycopg2==2.9.9
+django-cors-headers==4.0.0
+djangorestframework-simplejwt==5.3.1
+djangorestframework==3.14.0
+django-extensions==3.2.3
+asgiref==3.7.2
+Pillow==10.0.0
+sqlparse==0.4.4
+tzdata==2023.3
+requests==2.31.0
+snowflake-id==0.0.5
