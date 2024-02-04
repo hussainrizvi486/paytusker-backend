@@ -46,7 +46,6 @@ class CartApi(ViewSet):
 
     def get_cart_detail(self, request):
         user = request.user
-        print(user)
         response_obj = {}
         customer = get_customer(user)
         cart = Cart.objects.filter(customer=customer).first()
@@ -97,8 +96,6 @@ class CartApi(ViewSet):
             cart = Cart.objects.get(id=cart_item.cart.id)
             cart.total_amount = 0
             cart.total_qty = 0
-            print(cart.total_qty)
-            print(cart.total_amount)
             cart.save()
 
         return Response(data={"message": "Cart Updated"}, status=status.HTTP_200_OK)

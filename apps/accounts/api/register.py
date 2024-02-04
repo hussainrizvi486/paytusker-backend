@@ -31,6 +31,12 @@ class RegisterUser(APIView):
                 f"The email is already in use.", status=status.HTTP_403_FORBIDDEN
             )
 
+        phone_exists = User.objects.filter(phone_number=user_object.get("phone")).first()
+        if phone_exists:
+            return Response(
+                f"The phone number is already in use.", status=status.HTTP_403_FORBIDDEN
+            )
+
         user = User.objects.create_user(
             first_name=user_object.get("first_name"),
             last_name=user_object.get("last_name"),

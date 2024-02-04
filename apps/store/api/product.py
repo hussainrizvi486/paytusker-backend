@@ -34,7 +34,6 @@ class ProductDetail(APIView):
 
             reviews_query = f""" SELECT r.* , c.customer_name, c.user_id FROM store_orderreview r
               INNER JOIN store_customer c on r.customer_id = c.id"""
-            print(Product._meta.get_fields())
             reviews = exceute_sql_query(reviews_query)
             from apps.accounts.models import User
 

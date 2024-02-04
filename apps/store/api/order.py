@@ -15,7 +15,6 @@ from server.utils import exceute_sql_query
 class OrderApi(ViewSet):
     def create_order(self, request):
         data = request.data
-        print(data.get("payment_method"))
         customer = get_customer(user=request.user)
         if not customer:
             return Response(data="User is not a customer")

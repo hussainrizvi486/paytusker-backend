@@ -9,6 +9,8 @@ admin.site.register(Address)
 @admin.register(User)
 class UserAdminView(UserAdmin):
     list_display = ["email", "username", "phone_number"]
+    list_filter = ["date_joined"]
+
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         (
