@@ -16,9 +16,18 @@ def index(request):
 
 urlpatterns = [
     path("register/", RegisterUser.as_view(), name="register_user"),
-    path("get-user-details/", UserApi.as_view({"get": "get_user_details"}), name="register_user"),
-    path("get-user-address/", UserApi.as_view({"get": "get_user_address"}), name="register_user"),
-
+    path(
+        "get-user-details/",
+        UserApi.as_view({"get": "get_user_details"}),
+    ),
+    path(
+        "get-user-address/",
+        UserApi.as_view({"get": "get_user_address"}),
+    ),
+    path(
+        "add-user-address/",
+        UserApi.as_view({"post": "add_user_address"}),
+    ),
     path(
         "auth-token/",
         views.AccountsTokenObtainPairView.as_view(),

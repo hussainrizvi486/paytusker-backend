@@ -2,7 +2,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from apps.accounts.models import User
+from apps.accounts.models import User, Address
 from django.core import serializers
 from rest_framework import status
 from server.utils import exceute_sql_query
@@ -32,3 +32,20 @@ class UserApi(ViewSet):
         data = exceute_sql_query(query)
 
         return Response(data=data)
+
+    def add_user_address(self, request):
+        data = request.data
+        address_object = Address.objects.create(
+            user=self.request.user,
+            address_title=data.get("address_title"),
+            address_type=data.get("address_type"),
+            country=data.get("country"),
+            state=data.get("state"),
+            city=data.get("city"),
+            address_line_1=data.get("details"),
+        )
+        address_object.save()
+
+        # print(data)
+
+        return Response(status=status.HTTP_201_CREATED, data="Address Created")
