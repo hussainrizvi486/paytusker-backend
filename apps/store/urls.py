@@ -1,12 +1,13 @@
 from django.urls import path
 from . import views
-from .api.product import ProductApi, ProductDetail
+from .api.product import ProductApi, ProductDetail, ProductsApi
 from .api.cart import CartApi
 from .api.order import OrderApi
 
 
 urlpatterns = [
     path("product/details/<str:product_id>", ProductDetail.as_view()),
+    path("product/search", ProductsApi.as_view({"get": "search_products"})),
     path("get-products", ProductApi.as_view()),
     path("add-to-cart", CartApi.as_view({"post": "add_to_cart"})),
     path("get-cart", CartApi.as_view({"get": "get_cart_detail"})),

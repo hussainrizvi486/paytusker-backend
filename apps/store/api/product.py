@@ -1,7 +1,29 @@
-from rest_framework.views import APIView
-from apps.store.models.product import Product, ProductImages, Category
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
+from django.db.models import Q
+from apps.store.models.product import Product, ProductImages, Category
+from rest_framework.serializers import ModelSerializer
+
+
+class ProductListSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = "__all__"
+
+
+class ProductsApi(ViewSet):
+    def search_products(self, request):
+        query = request.GET.get("query")
+        if query:
+            query = str(query).strip()
+            products_queryset = Product.objects.filter(
+                Q(product_name=query) | Q(category=query)
+            )
+            products_data = ProductListSerializer(data=products_queryset)
+
+        return Response(data=products_data.data)
 
 
 class ProductDetail(APIView):
