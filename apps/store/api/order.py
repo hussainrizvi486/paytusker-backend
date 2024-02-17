@@ -45,7 +45,7 @@ class OrderApi(ViewSet):
         if orders_qs:
             for order in orders_qs:
                 order_dict = {
-                    "order_id": order.id,
+                    "order_id": order.order_id,
                     "grand_total": order.grand_total,
                     "total_qty": order.total_qty,
                     "order_date": order.order_date,
