@@ -36,9 +36,7 @@ class ProductDetail(APIView):
             pi = list(
                 ProductImages.objects.values("image_url").filter(product=product_id)
             )
-
             images = []
-            # data["price"] = "{:20,.2f}".format(data["price"])
             if pi:
                 for image in pi:
                     images.append(image.get("image_url"))
@@ -71,7 +69,7 @@ class ProductApi(APIView):
     def get(self, request):
         products = Product.objects.values(
             "id", "product_name", "price", "cover_image", "category"
-        )[:50]
+        )[:36]
 
         return Response(status=200, data=products)
 
