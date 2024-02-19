@@ -4,13 +4,21 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from django.db.models import Q
 from apps.store.models.product import Product, ProductImages, Category
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 
 
-class ProductListSerializer(ModelSerializer):
+class ProductListSerializer(serializers.ModelSerializer):
+    category_name = serializers.SerializerMethodField(method_name="get_category_name")
+
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = ["cover_image", "rating", "price", "product_name", "category_name"]
+
+    def get_category_name(self, obj):
+        if obj.category:
+            return obj.category.name
+        else:
+            return None
 
 
 class ProductsApi(ViewSet):
@@ -19,11 +27,14 @@ class ProductsApi(ViewSet):
         if query:
             query = str(query).strip()
             products_queryset = Product.objects.filter(
-                Q(product_name=query) | Q(category=query)
+                Q(product_name__icontains=query) | Q(category__name__icontains=query)
             )
-            products_data = ProductListSerializer(data=products_queryset)
 
-        return Response(data=products_data.data)
+            if products_queryset:
+                products_data = ProductListSerializer(products_queryset, many=True)
+                return Response(data=products_data.data)
+
+            return Response(data="No Items")
 
 
 class ProductDetail(APIView):

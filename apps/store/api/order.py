@@ -9,6 +9,21 @@ from rest_framework.permissions import IsAuthenticated
 from django.core import serializers
 from rest_framework import status
 from server.utils import exceute_sql_query
+import stripe
+from rest_framework.decorators import api_view
+
+stripe.api_key = "sk_test_51O2D7TSHIJhZN3ua8TrAYk0UhmTqadkUMggqLR0u9nvofMMVhZdoWMMThEpjPE66cBDDTdNQfA2S0VAv96bzLRgx00oepL2K7G"
+
+
+@api_view(["GET"])
+def test_payment(request):
+    test_payment_intent = stripe.PaymentIntent.create(
+        amount=1000,
+        currency="pln",
+        payment_method_types=["card"],
+        receipt_email="test@example.com",
+    )
+    return Response(status=status.HTTP_200_OK, data=test_payment_intent)
 
 
 @permission_classes([IsAuthenticated])
