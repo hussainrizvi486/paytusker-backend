@@ -83,4 +83,4 @@ class OrderReview(BaseModel):
     review_content = models.TextField()
 
     def __str__(self) -> str:
-        return self.customer.customer_name
+        return f"{self.customer.customer_name}-{self.order.order_id}"

@@ -1,16 +1,21 @@
-from apps.store.models.order import Order, OrderItems
-from apps.store.models.customer import CartItem, Cart
-from apps.store.models.product import Product
+from django.db.models import Q
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from apps.store.utils import get_customer
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
-from django.core import serializers
 from rest_framework import status
-from server.utils import exceute_sql_query
-import stripe
 from rest_framework.decorators import api_view
+import stripe
+from datetime import datetime
+
+
+from server.utils import exceute_sql_query
+from apps.store.utils import get_customer
+from apps.store.models.order import Order, OrderItems, OrderReview
+from apps.store.models.customer import CartItem, Cart
+from apps.store.models.product import Product
+from apps.store.permissions import IsCustomerUser
+
 
 stripe.api_key = "sk_test_51O2D7TSHIJhZN3ua8TrAYk0UhmTqadkUMggqLR0u9nvofMMVhZdoWMMThEpjPE66cBDDTdNQfA2S0VAv96bzLRgx00oepL2K7G"
 
@@ -89,3 +94,60 @@ class OrderApi(ViewSet):
                 data.append(order_dict)
 
             return Response(data=data, status=status.HTTP_200_OK)
+
+
+@permission_classes([IsCustomerUser])
+class CustomerFunctions(ViewSet):
+    def check_review_data(self, data: dict, customer):
+        product_id = Product.objects.filter(id=data.get("product_id")).first()
+        order_id = Order.objects.filter(order_id=data.get("order_id")).first()
+
+        if OrderReview.objects.filter(
+            product=product_id, customer=customer, order=order_id
+        ).exists():
+            return "Review already exists", False
+
+        return "", True
+
+    def add_order_review(self, request):
+        req_data: dict = request.data
+        if req_data:
+            customer = get_customer(request.user)
+            message, validated = self.check_review_data(req_data, customer)
+            if not validated:
+                return Response(data=message)
+
+            review = OrderReview.objects.create(
+                customer=customer,
+                order=Order.objects.get(order_id=req_data.get("order_id")),
+                product=Product.objects.get(id=req_data.get("product_id")),
+                rating=req_data.get("rating"),
+                review_content=req_data.get("review_content"),
+            )
+            review.save()
+
+            return Response(data="Review Added", status=status.HTTP_201_CREATED)
+        return Response(data="Data is missing", status=status.HTTP_204_NO_CONTENT)
+
+    def get_order_review(
+        self,
+        request,
+    ):
+
+        filters = request.GET.get("filters") or {}
+        customer = get_customer(request.user)
+        response_data = []
+        orders_reviews = OrderReview.objects.filter(customer=customer)
+        for review in orders_reviews:
+            response_data.append(
+                {
+                    "product_name": review.product.product_name,
+                    "product_image": review.product.cover_image,
+                    "order_id": review.order.order_id,
+                    "order_date": review.order.order_date.strftime("%d-%m-%Y"),
+                    "review_date": review.creation.strftime("%d-%m-%Y"),
+                    "review_content": review.review_content,
+                    "rating": review.rating,
+                }
+            )
+        return Response(data=response_data)

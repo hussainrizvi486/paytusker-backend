@@ -7,4 +7,3 @@ def get_customer(user):
         return Customer.objects.get(user=user)
     except Customer.DoesNotExist:
         return False
-

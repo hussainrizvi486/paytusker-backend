@@ -5,20 +5,15 @@ from rest_framework.viewsets import ViewSet
 from django.db.models import Q
 from apps.store.models.product import Product, ProductImages, Category
 from rest_framework import serializers
+from apps.store.serializers import ProductListSerializer
+from apps.store.models.order import OrderItems
 
 
-class ProductListSerializer(serializers.ModelSerializer):
-    category_name = serializers.SerializerMethodField(method_name="get_category_name")
-
-    class Meta:
-        model = Product
-        fields = ["cover_image", "rating", "price", "product_name", "category_name"]
-
-    def get_category_name(self, obj):
-        if obj.category:
-            return obj.category.name
-        else:
-            return None
+def get_top_rated_items():
+    products_queryset = Product.objects.order_by("rating")[:12]
+    if products_queryset:
+        return ProductListSerializer(products_queryset).data
+    return []
 
 
 class ProductsApi(ViewSet):
@@ -106,8 +101,3 @@ class ProductApi(APIView):
             cover_images=product_object.get("cover_images"),
         )
         product.save()
-
-
-def bulk_upload():
-    bulk_items = list()
-    Product.objects.bulk_create(bulk_items)

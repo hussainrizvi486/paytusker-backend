@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 from .api.product import ProductApi, ProductDetail, ProductsApi
 from .api.cart import CartApi
-from .api.order import OrderApi, test_payment
+from .api.order import OrderApi, test_payment, CustomerFunctions
 
 
 urlpatterns = [
@@ -19,4 +19,12 @@ urlpatterns = [
     path("order/create-order", OrderApi.as_view({"post": "create_order"})),
     path("order/get-orders", OrderApi.as_view({"get": "get_customer_orders"})),
     path("cart/update-cart", CartApi.as_view({"post": "update_cart_item"})),
+    path(
+        "customer/add-order-review",
+        CustomerFunctions.as_view({"post": "add_order_review"}),
+    ),
+    path(
+        "customer/get-order-review",
+        CustomerFunctions.as_view({"get": "get_order_review"}),
+    ),
 ]
