@@ -56,6 +56,9 @@ class OrderApi(ViewSet):
 
         order.save()
 
+        customer_cart.delete()
+        cart_items.delete()
+
         return Response(status=200, data=order.id)
 
     def get_customer_orders(self, request):

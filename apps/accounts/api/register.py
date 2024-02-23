@@ -9,6 +9,8 @@ from rest_framework import status
 class RegisterUser(APIView):
     def post(self, request):
         user_object: dict = request.data
+        if not user_object:
+            return Response("Please send user object", status=status.HTTP_403_FORBIDDEN)
 
         required_fields = [
             "first_name",
@@ -19,19 +21,20 @@ class RegisterUser(APIView):
             "password",
         ]
 
-        for field in user_object:
+        for field in user_object.keys():
             if field not in required_fields:
-                return Response(
-                    f"{str(field)} is missing.", status=status.HTTP_403_FORBIDDEN
-                )
+                return Response(f"fields is missing.", status=status.HTTP_403_FORBIDDEN)
 
-        email_exists = User.objects.filter(email=user_object.get("email")).first()
+        email_exists = User.objects.filter(email=user_object.get("email")).exists()
         if email_exists:
             return Response(
                 f"The email is already in use.", status=status.HTTP_403_FORBIDDEN
             )
 
-        phone_exists = User.objects.filter(phone_number=user_object.get("phone")).first()
+        phone_exists = User.objects.filter(
+            phone_number=user_object.get("phone")
+        ).exists()
+
         if phone_exists:
             return Response(
                 f"The phone number is already in use.", status=status.HTTP_403_FORBIDDEN

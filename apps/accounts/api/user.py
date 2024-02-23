@@ -24,11 +24,9 @@ class UserApi(ViewSet):
         return Response(data=data, status=status.HTTP_200_OK)
 
     def get_user_address(self, request):
-        user = request.user
+        print(Address._meta.fields)
         data = {}
-        query = (
-            f""" SELECT * FROM accounts_address WHERE user_id = '{request.user.id}' """
-        )
+        query = f""" SELECT * FROM accounts_address WHERE user_id = '{request.user.id}' ORDER BY creation DESC  """
         data = exceute_sql_query(query)
 
         return Response(data=data)

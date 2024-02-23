@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from uuid import uuid4
 from django.contrib.auth.hashers import make_password
-
+from apps.store.models.base import BaseModel
 
 class UserManager(BaseUserManager):
     def create_user(self, email, phone_number=None, password=None, **extra_fields):
@@ -54,7 +54,7 @@ class User(AbstractUser):
         return self.username
 
 
-class Address(models.Model):
+class Address(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     address_title = models.CharField(max_length=200, null=True)
     address_type = models.CharField(max_length=200, null=True)
