@@ -46,7 +46,6 @@ class ProductImages(BaseModel):
 
 class ProductAttribute(BaseModel):
     attribute_name = models.CharField(max_length=999)
-
     def __str__(self) -> str:
         return self.attribute_name
 
