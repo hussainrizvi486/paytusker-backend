@@ -10,3 +10,4 @@ sqlparse==0.4.4
 tzdata==2023.3
 requests==2.31.0
 snowflake-id==0.0.5
+stripe==8.3.0
