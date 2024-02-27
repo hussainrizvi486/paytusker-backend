@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.contrib.auth.hashers import make_password
 from apps.store.models.base import BaseModel
 
+
 class UserManager(BaseUserManager):
     def create_user(self, email, phone_number=None, password=None, **extra_fields):
         if not email:
@@ -42,7 +43,6 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
     verified = models.BooleanField(default=False)
-
     objects = UserManager()
 
     USERNAME_FIELD = "email"
