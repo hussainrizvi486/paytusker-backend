@@ -11,10 +11,8 @@ from apps.store.models.order import OrderItems
 
 def get_top_rated_items():
     products_queryset = Product.objects.order_by("rating")[:12]
-
     if products_queryset:
         return ProductListSerializer(products_queryset).data
-
     return []
 
 
@@ -26,12 +24,20 @@ class ProductsApi(ViewSet):
             products_queryset = Product.objects.filter(
                 Q(product_name__icontains=query) | Q(category__name__icontains=query)
             )
+
             if products_queryset:
                 products_data = ProductListSerializer(products_queryset, many=True)
+                return Response(
+                    data={
+                        "products": products_data.data,
+                        "message": "Data Found",
+                        "total_products": len(products_data.data),
+                    }
+                )
 
-                return Response(data=products_data.data)
-            return Response(data="No Items")
-        return Response(data="Please give the query")
+            return Response(data={"products": [], "message": "No items Found"})
+
+        return Response(data="Please enter a query")
 
 
 class ProductDetail(APIView):

@@ -27,10 +27,9 @@ class UserApi(ViewSet):
         address_id = request.GET.get("id")
 
         if address_id:
-            address_query_set = Address.objects.filter(id=address_id).order_by(
-                "-modified"
-            )
+            address_query_set = Address.objects.get(id=address_id)
             if address_query_set:
+                print(address_query_set)
                 serailized_data = UserAddressSerializer(address_query_set)
                 return Response(data=serailized_data.data)
             return Response(data=[])
