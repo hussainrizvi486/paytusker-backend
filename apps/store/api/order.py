@@ -78,6 +78,7 @@ class OrderApi(ViewSet):
                     "delivery_status": order.delivery_status,
                     "order_status": order.order_status,
                 }
+
                 order_items = exceute_sql_query(
                     f"""SELECT
                         p.product_name,
@@ -93,10 +94,9 @@ class OrderApi(ViewSet):
                 )
 
                 order_dict["items"] = order_items
-
                 data.append(order_dict)
 
-            return Response(data=data, status=status.HTTP_200_OK)
+        return Response(data=data, status=status.HTTP_200_OK)
 
 
 @permission_classes([IsCustomerUser])

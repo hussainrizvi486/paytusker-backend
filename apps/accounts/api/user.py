@@ -57,9 +57,20 @@ class UserApi(ViewSet):
         return Response(status=status.HTTP_201_CREATED, data="Address Created")
 
     def edit_user_address(self, request):
-        address_id = request.GET.get("id")
-        address_object = request.GET.get("address_object")
-        address_record = Address.objects.filter(id=address_id)
-        address_record.update(**address_object)
+        request_data = request.data
+        address_id = request_data.get("id")
+
+        if request_data.get("action") == "remove":
+            try:
+                Address.objects.get(id=address_id).delete()
+                return Response(data="Address deleted")
+
+            except Address.DoesNotExist:
+                return Response(data="Address not found")
+
+        if request_data.get("action") == "edit":
+            address_object = request_data.get("address_object")
+            address_record = Address.objects.filter(id=address_id)
+            address_record.update(**address_object)
 
         return Response(data="Address updated")

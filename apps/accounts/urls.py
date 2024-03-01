@@ -29,6 +29,10 @@ urlpatterns = [
         UserApi.as_view({"post": "add_user_address"}),
     ),
     path(
+        "edit-user-address/",
+        UserApi.as_view({"post": "edit_user_address"}),
+    ),
+    path(
         "auth-token/",
         views.AccountsTokenObtainPairView.as_view(),
         name="token_obtain_pair",

@@ -16,6 +16,8 @@ def get_top_rated_items():
     return []
 
 
+
+
 class ProductsApi(ViewSet):
     def search_products(self, request):
         query = request.GET.get("query")
