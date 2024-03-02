@@ -7,38 +7,61 @@ from apps.store.models.product import Product, ProductImages, Category
 from rest_framework import serializers
 from apps.store.serializers import ProductListSerializer
 from apps.store.models.order import OrderItems
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from rest_framework.pagination import PageNumberPagination
+
+
+class ProductsListPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = "page_size"
 
 
 def get_top_rated_items():
     products_queryset = Product.objects.order_by("rating")[:12]
+
     if products_queryset:
         return ProductListSerializer(products_queryset).data
     return []
 
 
-
-
 class ProductsApi(ViewSet):
     def search_products(self, request):
         query = request.GET.get("query")
+        pagniator = ProductsListPagination()
         if query:
             query = str(query).strip()
-            products_queryset = Product.objects.filter(
-                Q(product_name__icontains=query) | Q(category__name__icontains=query)
+            vector = SearchVector("product_name", "description")
+            search_query = SearchQuery(query)
+            products_queryset = (
+                Product.objects.annotate(
+                    rank=SearchRank(vector=vector, query=search_query)
+                )
+                .filter(rank__gte=0.001)
+                .order_by("-rank")
             )
 
             if products_queryset:
-                products_data = ProductListSerializer(products_queryset, many=True)
-                return Response(
+                products_res = pagniator.paginate_queryset(products_queryset, request)
+                products_data = ProductListSerializer(products_res, many=True)
+
+                return pagniator.get_paginated_response(
                     data={
                         "products": products_data.data,
                         "message": "Data Found",
-                        "total_products": len(products_data.data),
+                        "total_products": pagniator.page.paginator.count,
+                        "current_page": pagniator.page.number,
                     }
                 )
+            # Response(
+            #         data={
+            #             "products": products_data.data,
+            #             "message": "Data Found",
+            #             "total_products": pagniator.page.paginator.count,
+            #             "current_page": pagniator.page.number,
+            #         }
+            #     )
 
             return Response(data={"products": [], "message": "No items Found"})
-
         return Response(data="Please enter a query")
 
 
