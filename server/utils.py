@@ -41,9 +41,9 @@ def get_category(q):
 def update_products():
     Product.objects.all().delete()
     SERVER_URL = "https://crm.paytusker.us"
-    file_path = os.path.join(os.path.dirname(__file__), "../../products.json")
+    file_path = os.path.join(os.path.dirname(__file__), "../products.json")
     json_data = json.load(open(file_path))
-    products_data = json_data["data"][:100]
+    products_data = json_data["data"][:1000]
 
     for product in products_data:
         category = get_category(product.get("item_group"))

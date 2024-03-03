@@ -9,10 +9,15 @@ from apps.store.serializers import ProductListSerializer
 from apps.store.models.order import OrderItems
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
+import json
+from decimal import Decimal
+
+
+class ProductMethods: ...
 
 
 class ProductsListPagination(PageNumberPagination):
-    page_size = 5
+    page_size = 20
     page_size_query_param = "page_size"
 
 
@@ -28,6 +33,13 @@ class ProductsApi(ViewSet):
     def search_products(self, request):
         query = request.GET.get("query")
         pagniator = ProductsListPagination()
+        filters = {}
+        if request.GET.get("filters"):
+            try:
+                filters = json.loads(request.GET.get("filters"))
+            except Exception:
+                filters = {}
+
         if query:
             query = str(query).strip()
             vector = SearchVector("product_name", "description")
@@ -41,6 +53,21 @@ class ProductsApi(ViewSet):
             )
 
             if products_queryset:
+                if filters.get("category_id"):
+                    category = Category.objects.get(id=filters.get("category_id"))
+
+                    products_queryset = products_queryset.filter(category=category)
+
+                if filters.get("min_price"):
+                    products_queryset = products_queryset.filter(
+                        price__gte=Decimal(filters.get("min_price"))
+                    )
+
+                if filters.get("max_price"):
+                    products_queryset = products_queryset.filter(
+                        price__lte=Decimal(filters.get("max_price"))
+                    )
+
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(products_res, many=True)
 
@@ -52,17 +79,27 @@ class ProductsApi(ViewSet):
                         "current_page": pagniator.page.number,
                     }
                 )
-            # Response(
-            #         data={
-            #             "products": products_data.data,
-            #             "message": "Data Found",
-            #             "total_products": pagniator.page.paginator.count,
-            #             "current_page": pagniator.page.number,
-            #         }
-            #     )
-
             return Response(data={"products": [], "message": "No items Found"})
         return Response(data="Please enter a query")
+
+
+
+    def get_product_detail(self, request):
+        product_id = request.GET.get("id")
+
+        if not product_id:
+            return Response(data={"message": "Please give the product"})
+
+        product = self.get_product_object(product_id)
+        if not product:
+            return Response(data={"message": "Product not found"})
+
+    def get_product_object(self, id):
+        try:
+            product = Product.objects.get(id=id)
+            return product
+        except Product.DoesNotExist:
+            return None
 
 
 class ProductDetail(APIView):
@@ -71,10 +108,10 @@ class ProductDetail(APIView):
         product = get_object_or_404(Product, id=product_id)
         if product:
             data = dict(Product.objects.values().filter(id=product_id)[0])
-
             pi = list(
                 ProductImages.objects.values("image_url").filter(product=product_id)
             )
+
             images = []
             if pi:
                 for image in pi:

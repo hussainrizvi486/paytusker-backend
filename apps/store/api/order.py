@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 import stripe
 from datetime import datetime
-
+import json
 
 from server.utils import exceute_sql_query
 from apps.store.utils import get_customer
@@ -63,7 +63,19 @@ class OrderApi(ViewSet):
 
     def get_customer_orders(self, request):
         customer = get_customer(request.user)
+        filters = {}
+
+        if request.GET.get("filters"):
+            try:
+                filters = json.loads(filters)
+            except Exception:
+                filters = {}
+
         orders_qs = Order.objects.filter(customer=customer)
+
+        if filters.get("order_status"):
+            orders_qs.filter(order_status=filters.get("order_status"))
+
         data = []
         if orders_qs:
             for order in orders_qs:
