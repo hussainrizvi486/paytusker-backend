@@ -72,17 +72,16 @@ class ProductsApi(ViewSet):
                 products_data = ProductListSerializer(products_res, many=True)
 
                 return pagniator.get_paginated_response(
-                    data={
-                        "products": products_data.data,
-                        "message": "Data Found",
-                        "total_products": pagniator.page.paginator.count,
-                        "current_page": pagniator.page.number,
-                    }
+                    products_data.data
+                    # data={
+                    #     ,
+                    #     "message": "Data Found",
+                    #     "total_products": pagniator.page.paginator.count,
+                    #     "current_page": pagniator.page.number,
+                    # }
                 )
             return Response(data={"products": [], "message": "No items Found"})
         return Response(data="Please enter a query")
-
-
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
