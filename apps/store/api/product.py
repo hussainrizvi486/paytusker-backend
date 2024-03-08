@@ -20,6 +20,21 @@ class ProductsListPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = "page_size"
 
+    def get_paginated_response(self, data):
+        return Response(
+            {
+                "links": {
+                    "next": self.get_next_link(),
+                    "previous": self.get_previous_link(),
+                },
+                "count": self.page.paginator.count,
+                "total_pages": self.page.paginator.num_pages,
+                "results": data,
+                "page_size": self.page_size,
+                "current_page": self.page.number,
+            }
+        )
+
 
 def get_top_rated_items():
     products_queryset = Product.objects.order_by("rating")[:12]
@@ -71,16 +86,8 @@ class ProductsApi(ViewSet):
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(products_res, many=True)
 
-                return pagniator.get_paginated_response(
-                    products_data.data
-                    # data={
-                    #     ,
-                    #     "message": "Data Found",
-                    #     "total_products": pagniator.page.paginator.count,
-                    #     "current_page": pagniator.page.number,
-                    # }
-                )
-            return Response(data={"products": [], "message": "No items Found"})
+                return pagniator.get_paginated_response(products_data.data)
+            return Response(data={"results": [], "message": "No items Found"})
         return Response(data="Please enter a query")
 
     def get_product_detail(self, request):

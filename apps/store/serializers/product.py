@@ -7,7 +7,14 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ["cover_image", "rating", "price", "product_name", "category_name"]
+        fields = [
+            "id",
+            "cover_image",
+            "rating",
+            "price",
+            "product_name",
+            "category_name",
+        ]
 
     def get_category_name(self, object):
         if object.category:
