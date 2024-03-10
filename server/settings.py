@@ -95,30 +95,31 @@ REST_FRAMEWORK = {
 }
 
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "ecomm_db",
+#         "USER": "hussainrizvi486",
+#         "PASSWORD": "UsO7iK8rCgnF",
+#         "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
+#         "PORT": "5432",
+#         "OPTIONS": {
+#             "sslmode": "require",
+#         },
+#     }
+# }
+
+# server primary db
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "ecomm_db",
-        "USER": "hussainrizvi486",
-        "PASSWORD": "UsO7iK8rCgnF",
-        "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
-        "PORT": "5432",
-        "OPTIONS": {
-            "sslmode": "require",
-        },
+        "NAME": "paytusker_db_primary",
+        "USER": "paytusker",
+        "PASSWORD": "1B7VC7PTC87UTRX",
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'railway',
-#         'HOST': 'containers-us-west-4.railway.app',
-#         'USER': 'root',
-#         'PASSWORD': 'RdpdwOfz6LaNyV98cdEC',
-#         'PORT': '5848',
-#     }
-# }
 
 
 # Password validation
