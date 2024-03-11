@@ -24,7 +24,7 @@ urlpatterns = [
         CustomerFunctions.as_view({"post": "add_order_review"}),
     ),
     path(
-        "customer/get-order-review",
+        "customer/get-reviews",
         CustomerFunctions.as_view({"get": "get_order_review"}),
     ),
 ]
