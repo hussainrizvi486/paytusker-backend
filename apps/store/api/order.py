@@ -114,28 +114,34 @@ class OrderApi(ViewSet):
 @permission_classes([IsCustomerUser])
 class CustomerFunctions(ViewSet):
     def check_review_data(self, data: dict, customer):
-        product_id = Product.objects.filter(id=data.get("product_id")).first()
-        order_id = Order.objects.filter(order_id=data.get("order_id")).first()
+        product_id = Product.objects.get(id=data.get("product_id"))
+        order_item = OrderReview.objects.get(id=data.get("id"))
 
         if OrderReview.objects.filter(
-            product=product_id, customer=customer, order=order_id
+            product=product_id, customer=customer, order_item=order_item
         ).exists():
+
             return "Review already exists", False
 
         return "", True
 
     def add_order_review(self, request):
         req_data: dict = request.data
+
         if req_data:
             customer = get_customer(request.user)
             message, validated = self.check_review_data(req_data, customer)
+
             if not validated:
                 return Response(data=message)
 
+            order_item = OrderItems.objects.get(id=req_data.get("id"))
+
             review = OrderReview.objects.create(
                 customer=customer,
-                order=Order.objects.get(order_id=req_data.get("order_id")),
-                product=Product.objects.get(id=req_data.get("product_id")),
+                order=order_item.order,
+                order_item=order_item,
+                product=order_item.item,
                 rating=req_data.get("rating"),
                 review_content=req_data.get("review_content"),
             )
@@ -153,6 +159,7 @@ class CustomerFunctions(ViewSet):
         customer = get_customer(request.user)
         response_data = []
         orders_reviews = OrderReview.objects.filter(customer=customer)
+
         for review in orders_reviews:
             response_data.append(
                 {
@@ -166,3 +173,24 @@ class CustomerFunctions(ViewSet):
                 }
             )
         return Response(data=response_data)
+
+    def to_review_items(self, request):
+        customer = get_customer(request.user)
+        order_items = OrderItems.objects.filter(
+            order__customer=customer, has_review=False, order__delivery_status=True
+        )
+        data = []
+
+        for row in order_items:
+            data.append(
+                {
+                    "product_name": row.item.product_name,
+                    "product_image": row.item.cover_image,
+                    "amount": row.amount,
+                    "qty": row.qty,
+                    "rate": row.rate,
+                    "id": row.id,
+                }
+            )
+
+        return Response(data=data)
