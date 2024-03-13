@@ -177,10 +177,9 @@ class CustomerFunctions(ViewSet):
     def to_review_items(self, request):
         customer = get_customer(request.user)
         order_items = OrderItems.objects.filter(
-            order__customer=customer, has_review=False, order__delivery_status=True
+            order__customer=customer, order__delivery_status=True, has_review=False
         )
         data = []
-
         for row in order_items:
             data.append(
                 {

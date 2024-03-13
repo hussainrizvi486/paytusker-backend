@@ -65,7 +65,7 @@ class OrderItems(BaseModel):
     )
     rate = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
-    # has_review = models.BooleanField(default=False)
+    has_review = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return self.order.order_id
@@ -79,7 +79,7 @@ class OrderItems(BaseModel):
 class OrderReview(BaseModel):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    # order_item = models.ForeignKey(OrderItems, on_delete=models.CASCADE)
+    order_item = models.ForeignKey(OrderItems, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     rating = models.FloatField()
     review_content = models.TextField()

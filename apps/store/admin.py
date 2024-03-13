@@ -29,7 +29,7 @@ class ProductAdmin(admin.ModelAdmin):
         ProductImageInline,
         ProductVariantAttributeInline,
     ]
-    search_fields = ["product_name", "category", "price"]
+    search_fields = ["product_name", "id"]
 
 
 admin.site.register(Product, ProductAdmin)
