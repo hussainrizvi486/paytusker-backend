@@ -115,7 +115,7 @@ class OrderApi(ViewSet):
 class CustomerFunctions(ViewSet):
     def check_review_data(self, data: dict, customer):
         product_id = Product.objects.get(id=data.get("product_id"))
-        order_item = OrderReview.objects.get(id=data.get("id"))
+        order_item = OrderItems.objects.get(id=data.get("id"))
 
         if OrderReview.objects.filter(
             product=product_id, customer=customer, order_item=order_item
@@ -146,7 +146,8 @@ class CustomerFunctions(ViewSet):
                 review_content=req_data.get("review_content"),
             )
             review.save()
-
+            order_item.has_review = True
+            order_item.save()
             return Response(data="Review Added", status=status.HTTP_201_CREATED)
         return Response(data="Data is missing", status=status.HTTP_204_NO_CONTENT)
 
@@ -172,7 +173,13 @@ class CustomerFunctions(ViewSet):
                     "rating": review.rating,
                 }
             )
-        return Response(data=response_data)
+
+        if response_data:
+            return Response(data={"reviews": response_data, "message": ""})
+
+        return Response(
+            data={"reviews": None, "message": "No Reviews Found"},
+        )
 
     def to_review_items(self, request):
         customer = get_customer(request.user)
@@ -180,11 +187,14 @@ class CustomerFunctions(ViewSet):
             order__customer=customer, order__delivery_status=True, has_review=False
         )
         data = []
+
         for row in order_items:
             data.append(
                 {
+                    "order_id": row.order.order_id,
                     "product_name": row.item.product_name,
                     "product_image": row.item.cover_image,
+                    "product_id": row.item.id,
                     "amount": row.amount,
                     "qty": row.qty,
                     "rate": row.rate,
@@ -192,4 +202,7 @@ class CustomerFunctions(ViewSet):
                 }
             )
 
-        return Response(data=data)
+        if data:
+            return Response(data={"reviews": data})
+
+        return Response(data={"reviews": None})
