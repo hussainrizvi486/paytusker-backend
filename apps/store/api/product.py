@@ -1,20 +1,14 @@
+import json
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-from django.db.models import Q
-from apps.store.models.product import Product, ProductImages, Category
-from rest_framework import serializers
-from apps.store.serializers import ProductListSerializer
-from apps.store.models.order import OrderReview
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
-import json
 from decimal import Decimal
-from django.core import serializers
 
-
-class ProductMethods: ...
+from apps.store.models.product import Product, ProductImages, Category
+from apps.store.serializers import ProductListSerializer
+from apps.store.models.order import OrderReview
 
 
 class ProductsListPagination(PageNumberPagination):
@@ -35,14 +29,6 @@ class ProductsListPagination(PageNumberPagination):
                 "current_page": self.page.number,
             }
         )
-
-
-def get_top_rated_items():
-    products_queryset = Product.objects.order_by("rating")[:12]
-
-    if products_queryset:
-        return ProductListSerializer(products_queryset).data
-    return []
 
 
 class ProductsApi(ViewSet):
@@ -152,26 +138,3 @@ class ProductApi(APIView):
         products = Product.objects.all().order_by("rating")[:36]
         serailized_data = ProductListSerializer(products, many=True)
         return Response(status=200, data=serailized_data.data)
-
-    def create_product(self, request):
-        product_object = {
-            "product_name": "",
-            "price": 0,
-            "description": "",
-            "stock": 0,
-            "disabled": "",
-            "category": "",
-            "cover_images": "",
-        }
-
-        product = Product.objects.create(
-            product_name=product_object.get("product_name"),
-            net_price=product_object.get("net_price"),
-            price=product_object.get("price"),
-            description=product_object.get("description"),
-            stock=product_object.get("stock"),
-            disabled=product_object.get("disabled"),
-            category=product_object.get("category"),
-            cover_images=product_object.get("cover_images"),
-        )
-        product.save()

@@ -1,5 +1,4 @@
 from apps.store.models.customer import Customer
-from snowflake import SnowflakeGenerator
 
 
 def get_customer(user):

@@ -1,6 +1,4 @@
 from django.contrib import admin
-
-# from .models import Product
 from apps.store.models.product import (
     Product,
     ProductImages,
@@ -20,13 +18,9 @@ class ProductVariantAttributeInline(admin.TabularInline):
     model = ProductVariantAttribute
 
 
-admin.site.register(ProductAttribute)
-
-
 class ProductAdmin(admin.ModelAdmin):
-    # model = Product
     list_filter = ["disabled", "creation"]
-    ordering  = ["-modified"]
+    ordering = ["-modified"]
     inlines = [
         ProductImageInline,
         ProductVariantAttributeInline,
@@ -35,16 +29,12 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Product, ProductAdmin)
-
+admin.site.register(ProductAttribute)
 admin.site.register(Discount)
 admin.site.register(Category)
-
-
 admin.site.register(Order)
 admin.site.register(OrderItems)
 admin.site.register(Customer)
 admin.site.register(Cart)
 admin.site.register(CartItem)
-
-
 admin.site.register(OrderReview)

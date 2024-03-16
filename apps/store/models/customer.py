@@ -1,11 +1,9 @@
-from collections.abc import Iterable
 from django.db import models
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 from .base import BaseModel
 from .product import Product
 from apps.accounts.models import User
-from django.dispatch import receiver
-from django.db.models.signals import post_save
-
 
 class Customer(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
