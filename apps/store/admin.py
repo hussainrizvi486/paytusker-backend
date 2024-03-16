@@ -25,6 +25,8 @@ admin.site.register(ProductAttribute)
 
 class ProductAdmin(admin.ModelAdmin):
     # model = Product
+    list_filter = ["disabled", "creation"]
+    ordering  = ["-modified"]
     inlines = [
         ProductImageInline,
         ProductVariantAttributeInline,

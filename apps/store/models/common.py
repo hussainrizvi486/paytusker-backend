@@ -4,7 +4,7 @@ from .base import BaseModel
 
 class Category(BaseModel):
     name = models.CharField(max_length=500)
-    image = models.CharField(max_length=9999, null=True)
+    image = models.CharField(max_length=9999, null=True, blank=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self) -> str:

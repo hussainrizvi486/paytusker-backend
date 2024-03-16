@@ -6,11 +6,12 @@ from django.db.models import Q
 from apps.store.models.product import Product, ProductImages, Category
 from rest_framework import serializers
 from apps.store.serializers import ProductListSerializer
-from apps.store.models.order import OrderItems
+from apps.store.models.order import OrderReview
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
 import json
 from decimal import Decimal
+from django.core import serializers
 
 
 class ProductMethods: ...
@@ -85,14 +86,10 @@ class ProductsApi(ViewSet):
 
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(products_res, many=True)
-
                 return pagniator.get_paginated_response(products_data.data)
-            
-            
+
             return Response(data={"results": [], "message": "No items Found"})
         return Response(data="Please enter a query")
-    
-
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
@@ -104,6 +101,27 @@ class ProductsApi(ViewSet):
         if not product:
             return Response(data={"message": "Product not found"})
 
+        product_data_object = {
+            "product_name": product.product_name,
+            "product_price": product.price,
+            "formatted_price": "${:0,.0f}".format(product.price),
+            "cover_image": product.cover_image,
+            "images": self.get_product_images(product),
+            "rating": product.rating or 0,
+            "category": product.category.name if product.category else None,
+            "description": product.description,
+            "product_reviews": self.get_product_reviews(product),
+        }
+
+        return Response(data=product_data_object)
+
+    def get_product_images(self, product_object):
+        query_set = ProductImages.objects.filter(product=product_object)
+        images_list = []
+        for row in query_set:
+            images_list.append(row.image_url)
+        return images_list
+
     def get_product_object(self, id):
         try:
             product = Product.objects.get(id=id)
@@ -111,53 +129,29 @@ class ProductsApi(ViewSet):
         except Product.DoesNotExist:
             return None
 
+    def get_product_reviews(self, product_object):
+        product_reviews = OrderReview.objects.filter(product=product_object)
+        reviews_data = []
 
-class ProductDetail(APIView):
-    def get(self, request, product_id):
-        data = {}
-        product = get_object_or_404(Product, id=product_id)
-        if product:
-            data = dict(Product.objects.values().filter(id=product_id)[0])
-            pi = list(
-                ProductImages.objects.values("image_url").filter(product=product_id)
+        for obj in product_reviews:
+            reviews_data.append(
+                {
+                    "user_image": obj.customer.user.image.url,
+                    "review_content": obj.review_content,
+                    "rating": obj.rating or 0,
+                    "customer_name": obj.customer.customer_name,
+                    "created_on": obj.creation.strftime("%d-%m-%Y"),
+                }
             )
 
-            images = []
-            if pi:
-                for image in pi:
-                    images.append(image.get("image_url"))
-
-            images.insert(0, data.get("cover_image"))
-            data["images"] = images
-
-            product_category = Category.objects.filter(
-                id=data.get("category_id")
-            ).first()
-
-            if product_category:
-                data["category"] = product_category
-            from server.utils import exceute_sql_query
-
-            reviews_query = f""" SELECT r.* , c.customer_name, c.user_id FROM store_orderreview r
-              INNER JOIN store_customer c on r.customer_id = c.id"""
-            reviews = exceute_sql_query(reviews_query)
-            from apps.accounts.models import User
-
-            for r in reviews:
-                r_user = User.objects.get(id=r.get("user_id"))
-                r["customer_image"] = r_user.image.url
-
-            data["reviews"] = reviews
-        return Response(status=200, data=data)
+        return reviews_data
 
 
 class ProductApi(APIView):
     def get(self, request):
-        products = Product.objects.values(
-            "id", "product_name", "price", "cover_image", "category"
-        )[:36]
-
-        return Response(status=200, data=products)
+        products = Product.objects.all().order_by("rating")[:36]
+        serailized_data = ProductListSerializer(products, many=True)
+        return Response(status=200, data=serailized_data.data)
 
     def create_product(self, request):
         product_object = {
