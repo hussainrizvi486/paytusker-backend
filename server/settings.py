@@ -91,46 +91,23 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    # "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
 }
 
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "ecomm_db",
-#         "USER": "hussainrizvi486",
-#         "PASSWORD": "UsO7iK8rCgnF",
-#         "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
-#         "PORT": "5432",
-#         "OPTIONS": {
-#             "sslmode": "require",
-#         },
-#     }
-# }
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'paytusker_primary_db',
-        'USER': 'paytusker',
-        'PASSWORD': 'zx10dvfpkc',
-        'HOST': 'localhost',
-        'PORT': '',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "ecomm_db",
+        "USER": "hussainrizvi486",
+        "PASSWORD": "UsO7iK8rCgnF",
+        "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
+        "PORT": "5432",
+        "OPTIONS": {
+            "sslmode": "require",
+        },
     }
 }
-
-# server primary db
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "paytusker_db_primary",
-#         "USER": "paytusker",
-#         "PASSWORD": "1B7VC7PTC87UTRX",
-#         "HOST": "localhost",
-#         "PORT": "",
-#     }
-# }
 
 
 # Password validation

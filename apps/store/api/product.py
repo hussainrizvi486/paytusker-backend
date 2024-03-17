@@ -1,20 +1,14 @@
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-from django.db.models import Q
-from apps.store.models.product import Product, ProductImages, Category
-from rest_framework import serializers
-from apps.store.serializers import ProductListSerializer
-from apps.store.models.order import OrderReview
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
 import json
 from decimal import Decimal
-from django.core import serializers
-
-
-class ProductMethods: ...
+from apps.store.serializers import ProductListSerializer
+from apps.store.models.order import OrderReview
+from apps.store.models.product import Product, ProductMedia, Category
+from apps.store.utils import get_category
 
 
 class ProductsListPagination(PageNumberPagination):
@@ -100,13 +94,14 @@ class ProductsApi(ViewSet):
         product = self.get_product_object(product_id)
         if not product:
             return Response(data={"message": "Product not found"})
-
+        product_images = self.get_product_images(product)
+        product_images.append(product.cover_image)
         product_data_object = {
             "product_name": product.product_name,
             "product_price": product.price,
             "formatted_price": "${:0,.0f}".format(product.price),
             "cover_image": product.cover_image,
-            "images": self.get_product_images(product),
+            "images": product_images,
             "rating": product.rating or 0,
             "category": product.category.name if product.category else None,
             "description": product.description,
@@ -115,11 +110,66 @@ class ProductsApi(ViewSet):
 
         return Response(data=product_data_object)
 
+    def create_product(self, request):
+        data: dict = request.data
+        item_category = None
+        item_type = data.get("item_type")
+
+        mandatory_fields = [
+            "product_name",
+            "price",
+            "net_price",
+            "category_id",
+            "description",
+            "cover_image",
+            "stock",
+        ]
+        for field in mandatory_fields:
+            if field not in data.keys():
+                return Response(data=f"Missing required field: {field}")
+
+        if data.get("category_id"):
+            item_category = get_category(category_id=data.get("category_id"))
+
+        elif data.get("category_name"):
+            item_category = get_category(category_name=data.get("category_name"))
+
+        product_object = {
+            "product_name": data.get("product_name"),
+            "price": Decimal(data.get("price") or 0),
+            "net_price": Decimal(data.get("price") or 0),
+            "category": item_category,
+            "description": data.get("description") or "",
+            "stock": data.get("stock"),
+        }
+
+        if data.get("cover_image"):
+            product_object["cover_image"] = data.get("cover_image")
+
+        if item_type == "003":
+            product_object["template"] = self.get_product_object(
+                data.get("template_id")
+            )
+
+        try:
+            product = Product.objects.create(**product_object)
+            product.save()
+            
+            if data.get("product_media"):
+                for object in data.get("product_media"):
+                    product_media_object = ProductMedia.objects.create(
+                        product=product, file=object
+                    )
+                    product_media_object.save()
+            return Response(data="Product created")
+        except Exception as e:
+            return Response(data=e)
+
     def get_product_images(self, product_object):
-        query_set = ProductImages.objects.filter(product=product_object)
+        query_set = ProductMedia.objects.filter(product=product_object)
         images_list = []
         for row in query_set:
-            images_list.append(row.image_url)
+            images_list.append(row.file)
         return images_list
 
     def get_product_object(self, id):

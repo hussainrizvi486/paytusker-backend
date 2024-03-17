@@ -28,7 +28,7 @@ class Product(BaseModel):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True
     )
-    cover_image = models.CharField(max_length=10000, null=True)
+    cover_image = models.ImageField(max_length=10000, null=True)
     rating = models.IntegerField(null=True, blank=True)
     item_type = models.CharField(
         max_length=999, choices=PRODUCT_TYPES, default="001", null=True, blank=True
@@ -47,9 +47,9 @@ class Product(BaseModel):
         return super().save(*args, **kwargs)
 
 
-class ProductImages(BaseModel):
+class ProductMedia(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    image_url = models.CharField(max_length=10000)
+    file = models.FileField(max_length=10000)
 
     def __str__(self) -> str:
         return self.product.product_name
