@@ -98,14 +98,16 @@ REST_FRAMEWORK = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "paytusker_primary_db",
-        "USER": "paytusker",
-        "PASSWORD": "zx10dvfpkc",
-        "HOST": "localhost",
-        "PORT": "",
+        "NAME": "ecomm_db",
+        "USER": "hussainrizvi486",
+        "PASSWORD": "UsO7iK8rCgnF",
+        "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
+        "PORT": "5432",
+        "OPTIONS": {
+            "sslmode": "require",
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -156,7 +158,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=300),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=2),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
