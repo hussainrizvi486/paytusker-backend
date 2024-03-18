@@ -1,7 +1,7 @@
 from django.contrib import admin
 from apps.store.models.product import (
     Product,
-    ProductImages,
+    ProductMedia,
     ProductVariantAttribute,
     ProductAttribute,
 )
@@ -11,7 +11,7 @@ from apps.store.models.order import Order, OrderItems, OrderReview
 
 
 class ProductImageInline(admin.TabularInline):
-    model = ProductImages
+    model = ProductMedia
 
 
 class ProductVariantAttributeInline(admin.TabularInline):
@@ -37,4 +37,6 @@ admin.site.register(OrderItems)
 admin.site.register(Customer)
 admin.site.register(Cart)
 admin.site.register(CartItem)
+
 admin.site.register(OrderReview)
+

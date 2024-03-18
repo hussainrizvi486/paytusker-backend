@@ -1,1 +1,1 @@
-from .product import Product, ProductImages
+from .product import Product, ProductMedia

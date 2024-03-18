@@ -7,7 +7,7 @@ import os
 from snowflake import SnowflakeGenerator
 
 from apps.store.models.customer import Customer
-from apps.store.models.product import Category, Product, ProductImages
+from apps.store.models.product import Category, Product, ProductMedia
 
 
 def exceute_sql_query(query: str, serialized=True):
@@ -75,11 +75,11 @@ def update_products():
                 for img in images:
                     image_url = f"{SERVER_URL}{img}"
                     bulk_product_images.append(
-                        ProductImages(image_url=image_url, product=db_product)
+                        ProductMedia(image_url=image_url, product=db_product)
                     )
 
         Product.objects.bulk_create(bulk_products)
-        ProductImages.objects.bulk_create(bulk_product_images)
+        ProductMedia.objects.bulk_create(bulk_product_images)
 
 
 ID_GEN = SnowflakeGenerator(42)
