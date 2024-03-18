@@ -31,14 +31,6 @@ class ProductsListPagination(PageNumberPagination):
         )
 
 
-def get_top_rated_items():
-    products_queryset = Product.objects.order_by("rating")[:12]
-
-    if products_queryset:
-        return ProductListSerializer(products_queryset).data
-    return []
-
-
 class ProductsApi(ViewSet):
     def search_products(self, request):
         query = request.GET.get("query")
@@ -100,7 +92,7 @@ class ProductsApi(ViewSet):
             "product_name": product.product_name,
             "product_price": product.price,
             "formatted_price": "${:0,.0f}".format(product.price),
-            "cover_image": product.cover_image,
+            "cover_image": product.cover_image.url,
             "images": product_images,
             "rating": product.rating or 0,
             "category": product.category.name if product.category else None,
@@ -154,7 +146,7 @@ class ProductsApi(ViewSet):
         try:
             product = Product.objects.create(**product_object)
             product.save()
-            
+
             if data.get("product_media"):
                 for object in data.get("product_media"):
                     product_media_object = ProductMedia.objects.create(
@@ -169,7 +161,7 @@ class ProductsApi(ViewSet):
         query_set = ProductMedia.objects.filter(product=product_object)
         images_list = []
         for row in query_set:
-            images_list.append(row.file)
+            images_list.append(row.file.url)
         return images_list
 
     def get_product_object(self, id):
@@ -202,26 +194,3 @@ class ProductApi(APIView):
         products = Product.objects.all().order_by("rating")[:36]
         serailized_data = ProductListSerializer(products, many=True)
         return Response(status=200, data=serailized_data.data)
-
-    def create_product(self, request):
-        product_object = {
-            "product_name": "",
-            "price": 0,
-            "description": "",
-            "stock": 0,
-            "disabled": "",
-            "category": "",
-            "cover_images": "",
-        }
-
-        product = Product.objects.create(
-            product_name=product_object.get("product_name"),
-            net_price=product_object.get("net_price"),
-            price=product_object.get("price"),
-            description=product_object.get("description"),
-            stock=product_object.get("stock"),
-            disabled=product_object.get("disabled"),
-            category=product_object.get("category"),
-            cover_images=product_object.get("cover_images"),
-        )
-        product.save()
