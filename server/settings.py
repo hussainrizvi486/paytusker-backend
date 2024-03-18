@@ -98,14 +98,11 @@ REST_FRAMEWORK = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "ecomm_db",
-        "USER": "hussainrizvi486",
-        "PASSWORD": "UsO7iK8rCgnF",
-        "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
-        "PORT": "5432",
-        "OPTIONS": {
-            "sslmode": "require",
-        },
+        "NAME": "paytusker_primary_db",
+        "USER": "paytusker",
+        "PASSWORD": "zx10dvfpkc",
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
@@ -155,8 +152,6 @@ MEDIA_URL = "/media/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
 AUTH_USER_MODEL = "accounts.User"
 
 

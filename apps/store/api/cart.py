@@ -1,15 +1,15 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.viewsets import ViewSet
-from apps.store.models.customer import Customer, Cart, CartItem
-from apps.store.models.product import Product
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
-from django.utils import tree
-from decimal import Decimal
-from apps.store.utils import get_customer
-from json import loads
 from rest_framework import status
-from django.shortcuts import get_object_or_404
+from decimal import Decimal
+from json import loads
+from apps.store.utils import get_customer
+from server.utils import exceute_sql_query
+from apps.store.models.customer import Cart, CartItem
+from apps.store.models.product import Product
 
 
 @permission_classes([IsAuthenticated])
@@ -52,8 +52,6 @@ class CartApi(ViewSet):
 
         if not cart:
             return Response(data=[])
-
-        from server.utils import exceute_sql_query
 
         query = f"""SELECT
                         ci.id,
@@ -99,5 +97,3 @@ class CartApi(ViewSet):
             cart.save()
 
         return Response(data={"message": "Cart Updated"}, status=status.HTTP_200_OK)
-
-    # def remove_cart

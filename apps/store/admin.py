@@ -37,4 +37,6 @@ admin.site.register(OrderItems)
 admin.site.register(Customer)
 admin.site.register(Cart)
 admin.site.register(CartItem)
+
 admin.site.register(OrderReview)
+

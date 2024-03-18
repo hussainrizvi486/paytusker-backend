@@ -4,7 +4,6 @@ from .product import Product
 from .customer import Customer
 from uuid import uuid4
 from server.utils import generate_snf_id
-from apps.accounts.models import User
 
 ORDER_STATUS = {
     ("001", "Order Pending"),

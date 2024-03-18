@@ -2,6 +2,7 @@ from apps.store.models.customer import Customer
 from apps.store.models.common import Category
 
 
+
 def get_customer(user):
     try:
         return Customer.objects.get(user=user)

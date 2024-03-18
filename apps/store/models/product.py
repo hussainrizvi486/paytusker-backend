@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from django.db import models
 from .base import BaseModel
 from .common import Category

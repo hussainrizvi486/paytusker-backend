@@ -1,9 +1,9 @@
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+import json
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
-import json
 from decimal import Decimal
 from apps.store.serializers import ProductListSerializer
 from apps.store.models.order import OrderReview
@@ -87,7 +87,7 @@ class ProductsApi(ViewSet):
         if not product:
             return Response(data={"message": "Product not found"})
         product_images = self.get_product_images(product)
-        product_images.append(product.cover_image)
+        product_images.append(product.cover_image.url)
         product_data_object = {
             "product_name": product.product_name,
             "product_price": product.price,

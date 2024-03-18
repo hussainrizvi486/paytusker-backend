@@ -1,6 +1,6 @@
+from uuid import uuid4
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from uuid import uuid4
 from django.contrib.auth.hashers import make_password
 from apps.store.models.base import BaseModel
 
