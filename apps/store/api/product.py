@@ -71,7 +71,9 @@ class ProductsApi(ViewSet):
                     )
 
                 products_res = pagniator.paginate_queryset(products_queryset, request)
-                products_data = ProductListSerializer(products_res, many=True)
+                products_data = ProductListSerializer(
+                    products_res, many=True, context={"request": request}
+                )
                 return pagniator.get_paginated_response(products_data.data)
 
             return Response(data={"results": [], "message": "No items Found"})
@@ -87,7 +89,7 @@ class ProductsApi(ViewSet):
         if not product:
             return Response(data={"message": "Product not found"})
         product_images = self.get_product_images(product)
-        product_images.append(product.cover_image.url)
+        # product_images.append(product.cover_image.url)
         product_data_object = {
             "product_name": product.product_name,
             "product_price": product.price,
@@ -159,9 +161,12 @@ class ProductsApi(ViewSet):
 
     def get_product_images(self, product_object):
         query_set = ProductMedia.objects.filter(product=product_object)
-        images_list = []
-        for row in query_set:
-            images_list.append(row.file.url)
+        images_list = [
+            self.request.build_absolute_uri(row.file.url) for row in query_set
+        ]
+        images_list.append(
+            self.request.build_absolute_uri(product_object.cover_image.url)
+        )
         return images_list
 
     def get_product_object(self, id):
@@ -192,5 +197,7 @@ class ProductsApi(ViewSet):
 class ProductApi(APIView):
     def get(self, request):
         products = Product.objects.all().order_by("rating")[:36]
-        serailized_data = ProductListSerializer(products, many=True)
+        serailized_data = ProductListSerializer(
+            products, many=True, context={"request": request}
+        )
         return Response(status=200, data=serailized_data.data)
