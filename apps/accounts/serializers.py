@@ -9,6 +9,7 @@ class AccountsTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         d_user = User.objects.get(email=user.email)
         token["username"] = d_user.username
+        token["image"] = d_user.image.url
         token["email"] = user.email
         return token
 
