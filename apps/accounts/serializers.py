@@ -4,13 +4,20 @@ from .models import User, Address
 
 
 class AccountsTokenObtainPairSerializer(TokenObtainPairSerializer):
+    default_error_messages = {"no_active_account": "Invalid credentials"}
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         d_user = User.objects.get(email=user.email)
         token["username"] = d_user.username
-        token["image"] = d_user.image.url
         token["email"] = user.email
+
+        if d_user.image:
+            token["image"] = cls.context.get("request").build_absolute_uri(
+                d_user.image.url
+            )
+            # token["image"] = d_user.image.url
         return token
 
 
