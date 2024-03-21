@@ -15,6 +15,13 @@ def index(request):
 
 
 urlpatterns = [
+    path("user/register/", RegisterUser.as_view(), name="register_user"),
+    path(
+        "user/login/",
+        views.AccountsTokenObtainPairView.as_view(),
+        name="token_obtain_pair",
+    ),
+    path("user/login/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("register/", RegisterUser.as_view(), name="register_user"),
     path(
         "get-user-details/",

@@ -46,31 +46,34 @@ class CartApi(ViewSet):
 
     def get_cart_detail(self, request):
         user = request.user
-        response_obj = {}
+        user_cart_data = {"items": []}
         customer = get_customer(user)
-        cart = Cart.objects.filter(customer=customer).first()
+        cart_object = Cart.objects.filter(customer=customer).first()
 
-        if not cart:
+        if not cart_object:
             return Response(data=[])
+        cart_items_queryset = CartItem.objects.filter(cart=cart_object)
 
-        query = f"""SELECT
-                        ci.id,
-                        ci.qty,
-                        ci.rate,
-                        p.cover_image,
-                        p.product_name,
-                        ci.amount
-                    FROM
-                        store_cartitem ci
-                    INNER JOIN store_product p on p.id = ci.item_id 
-                    WHERE ci.cart_id = '{cart.id}'
-                    """
-        cart_items = exceute_sql_query(query)
-        response_obj["items"] = cart_items
-        response_obj["total_qty"] = cart.total_qty
-        response_obj["total_amount"] = cart.total_amount
+        for item in cart_items_queryset:
+            user_cart_data["items"].append(
+                {
+                    "id": item.id,
+                    "qty": item.qty,
+                    "rate": item.rate,
+                    "amount": item.amount,
+                    "formatted_amount": item.amount,
+                    "formatted_rate": item.rate,
+                    "product_name": item.item.product_name,
+                    "cover_image": self.request.build_absolute_uri(
+                        item.item.cover_image.url
+                    ),
+                }
+            )
 
-        return Response(data=response_obj)
+        user_cart_data["total_qty"] = cart_object.total_qty
+        user_cart_data["total_amount"] = cart_object.total_amount
+
+        return Response(data=user_cart_data)
 
     def update_cart_item(self, request):
         data = loads(self.request.body)
