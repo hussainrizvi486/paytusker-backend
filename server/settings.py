@@ -98,14 +98,11 @@ REST_FRAMEWORK = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "ecomm_db",
-        "USER": "hussainrizvi486",
-        "PASSWORD": "UsO7iK8rCgnF",
-        "HOST": "ep-blue-fire-a14zhsdr-pooler.ap-southeast-1.aws.neon.tech",
-        "PORT": "5432",
-        "OPTIONS": {
-            "sslmode": "require",
-        },
+        "NAME": "paytusker_primary_db",
+        "USER": "paytusker",
+        "PASSWORD": "zx10dvfpkc",
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
@@ -132,11 +129,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 
