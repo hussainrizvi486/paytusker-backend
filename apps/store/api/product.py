@@ -63,7 +63,6 @@ class ProductsApi(ViewSet):
             if products_queryset:
                 if filters.get("category_id"):
                     category = Category.objects.get(id=filters.get("category_id"))
-
                     products_queryset = products_queryset.filter(category=category)
 
                 if filters.get("min_price"):
