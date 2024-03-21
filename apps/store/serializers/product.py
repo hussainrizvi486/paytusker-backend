@@ -4,7 +4,6 @@ from apps.store.models import Product
 
 class ProductListSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField(method_name="get_category_name")
-    cover_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -20,9 +19,5 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_category_name(self, object):
         if object.category:
             return object.category.name
-        return None
 
-    def get_cover_image(self, object):
-        request = self.context.get("request")
-        if object.cover_image:
-            return request.build_absolute_uri(object.cover_image.url)
+        return None

@@ -7,12 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
 from apps.store.serializers import ProductListSerializer
 from apps.store.models.order import OrderReview
-from apps.store.models.product import (
-    Product,
-    ProductMedia,
-    Category,
-    ProductVariantAttribute,
-)
+from apps.store.models.product import Product, ProductMedia, Category
 from apps.store.utils import get_category
 
 
@@ -55,7 +50,6 @@ class ProductsApi(ViewSet):
                 Product.objects.annotate(
                     rank=SearchRank(vector=vector, query=search_query)
                 )
-                .exclude(item_type="002")
                 .filter(rank__gte=0.001)
                 .order_by("-rank")
             )
@@ -76,9 +70,7 @@ class ProductsApi(ViewSet):
                     )
 
                 products_res = pagniator.paginate_queryset(products_queryset, request)
-                products_data = ProductListSerializer(
-                    products_res, many=True, context={"request": request}
-                )
+                products_data = ProductListSerializer(products_res, many=True)
                 return pagniator.get_paginated_response(products_data.data)
 
             return Response(data={"results": [], "message": "No items Found"})
@@ -93,10 +85,9 @@ class ProductsApi(ViewSet):
         product = self.get_product_object(product_id)
         if not product:
             return Response(data={"message": "Product not found"})
-
         product_images = self.get_product_images(product)
+        product_images.append(product.cover_image.url)
         product_data_object = {
-            "id": product.id,
             "product_name": product.product_name,
             "product_price": product.price,
             "formatted_price": "${:0,.0f}".format(product.price),
@@ -107,13 +98,6 @@ class ProductsApi(ViewSet):
             "description": product.description,
             "product_reviews": self.get_product_reviews(product),
         }
-
-        if product.item_type == "003":
-            product_varients = self.get_product_variants(product.template)
-            # for i in product_varients:
-            #     for attr in in
-            product_data_object["product_template"] = product.template.id
-            product_data_object["product_varients"] = product_varients
 
         return Response(data=product_data_object)
 
@@ -162,33 +146,21 @@ class ProductsApi(ViewSet):
             product = Product.objects.create(**product_object)
             product.save()
 
-            def filter_product_media_keys(key):
-                if str(key).startswith("product_media"):
-                    return True
-                return False
-
-            product_file_keys = list(filter(filter_product_media_keys, data.keys()))
-
-            for key in product_file_keys:
-                product_media_object = ProductMedia.objects.create(
-                    product=product, file=data.get(key)
-                )
-                product_media_object.save()
-
-            return Response(
-                data=f"Product created {product.id} : {product.product_name} "
-            )
+            if data.get("product_media"):
+                for object in data.get("product_media"):
+                    product_media_object = ProductMedia.objects.create(
+                        product=product, file=object
+                    )
+                    product_media_object.save()
+            return Response(data="Product created")
         except Exception as e:
             return Response(data=e)
 
     def get_product_images(self, product_object):
         query_set = ProductMedia.objects.filter(product=product_object)
-        images_list = [
-            self.request.build_absolute_uri(row.file.url) for row in query_set
-        ]
-        images_list.append(
-            self.request.build_absolute_uri(product_object.cover_image.url)
-        )
+        images_list = []
+        for row in query_set:
+            images_list.append(row.file.url)
         return images_list
 
     def get_product_object(self, id):
@@ -215,36 +187,9 @@ class ProductsApi(ViewSet):
 
         return reviews_data
 
-    def get_product_variants(self, product_object):
-        product_varients = Product.objects.filter(template=product_object)
-        varients_data = []
-        for variant in product_varients:
-            varients_data.append(
-                {
-                    "id": variant.id,
-                    "product_name": variant.product_name,
-                    "cover_image": self.request.build_absolute_uri(variant.cover_image.url),
-                    "price": variant.price,
-                    "rating": variant.rating,
-                    "attributes": self.get_variant_attributes(variant),
-                }
-            )
-        return varients_data
-
-    def get_variant_attributes(self, varient_object):
-        variant_attr_object = ProductVariantAttribute.objects.filter(
-            product=varient_object
-        ).first()
-        return {
-            "attribute": variant_attr_object.attribute.attribute_name,
-            "attribute_value": variant_attr_object.attribute_value,
-        }
-
 
 class ProductApi(APIView):
     def get(self, request):
-        products = Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
-        serailized_data = ProductListSerializer(
-            products, many=True, context={"request": request}
-        )
+        products = Product.objects.all().order_by("rating")[:36]
+        serailized_data = ProductListSerializer(products, many=True)
         return Response(status=200, data=serailized_data.data)

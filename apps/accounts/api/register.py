@@ -21,14 +21,9 @@ class RegisterUser(APIView):
             "password",
         ]
 
-        for field in required_fields:
-            if field not in user_object.keys():
-                return Response(
-                    f"{field} is missing.", status=status.HTTP_403_FORBIDDEN
-                )
-
-        # for field in user_object.keys():
-        #     if field not in required_fields:
+        for field in user_object.keys():
+            if field not in required_fields:
+                return Response(f"fields is missing.", status=status.HTTP_403_FORBIDDEN)
 
         email_exists = User.objects.filter(email=user_object.get("email")).exists()
         if email_exists:
