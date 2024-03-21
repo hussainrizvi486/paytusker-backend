@@ -244,7 +244,7 @@ class ProductsApi(ViewSet):
 
 class ProductApi(APIView):
     def get(self, request):
-        products = Product.objects.all().order_by("rating")[:36]
+        products = Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
         serailized_data = ProductListSerializer(
             products, many=True, context={"request": request}
         )

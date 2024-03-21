@@ -20,6 +20,7 @@ class ProductVariantAttributeInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     list_filter = ["disabled", "creation"]
+    list_display = ["product_name", "price", "item_type", "rating"]
     ordering = ["-modified"]
     inlines = [
         ProductImageInline,
@@ -38,4 +39,3 @@ admin.site.register(Customer)
 admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(OrderReview)
-
