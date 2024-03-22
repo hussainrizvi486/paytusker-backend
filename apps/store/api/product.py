@@ -110,8 +110,6 @@ class ProductsApi(ViewSet):
 
         if product.item_type == "003":
             product_varients = self.get_product_variants(product.template)
-            # for i in product_varients:
-            #     for attr in in
             product_data_object["product_template"] = product.template.id
             product_data_object["product_varients"] = product_varients
 
@@ -121,6 +119,8 @@ class ProductsApi(ViewSet):
         data: dict = request.data
         item_category = None
         item_type = data.get("item_type")
+        product_id = data.get("product_id")
+        req_type = data.get("req_type")
 
         mandatory_fields = [
             "product_name",
@@ -131,13 +131,26 @@ class ProductsApi(ViewSet):
             "cover_image",
             "stock",
         ]
+
         for field in mandatory_fields:
             if field not in data.keys():
                 return Response(data=f"Missing required field: {field}")
 
+        if req_type == "create":
+            try:
+                _product = Product.objects.filter(id=data.get("server_id")).first()
+                if _product:
+                    return Response(
+                        data={
+                            "product_id": _product.id,
+                            "message": "Product already exist",
+                        }
+                    )
+            except Product.DoesNotExist:
+                ...
+
         if data.get("category_id"):
             item_category = get_category(category_id=data.get("category_id"))
-
         elif data.get("category_name"):
             item_category = get_category(category_name=data.get("category_name"))
 
@@ -159,25 +172,34 @@ class ProductsApi(ViewSet):
             )
 
         try:
-            product = Product.objects.create(**product_object)
-            product.save()
+            product = None
+            if req_type == "create":
+                product = Product.objects.create(**product_object)
+                product.save()
+            else:
+                ...
 
-            def filter_product_media_keys(key):
-                if str(key).startswith("product_media"):
-                    return True
-                return False
+            if product:
 
-            product_file_keys = list(filter(filter_product_media_keys, data.keys()))
+                def filter_product_media_keys(key):
+                    if str(key).startswith("product_media"):
+                        return True
+                    return False
 
-            for key in product_file_keys:
-                product_media_object = ProductMedia.objects.create(
-                    product=product, file=data.get(key)
+                product_file_keys = list(filter(filter_product_media_keys, data.keys()))
+
+                for key in product_file_keys:
+                    product_media_object = ProductMedia.objects.create(
+                        product=product, file=data.get(key)
+                    )
+                    product_media_object.save()
+
+                return Response(
+                    data={
+                        "message": f"Product created {product.id} : {product.product_name}",
+                        "product_id": product.id,
+                    }
                 )
-                product_media_object.save()
-
-            return Response(
-                data=f"Product created {product.id} : {product.product_name} "
-            )
         except Exception as e:
             return Response(data=e)
 
@@ -223,7 +245,9 @@ class ProductsApi(ViewSet):
                 {
                     "id": variant.id,
                     "product_name": variant.product_name,
-                    "cover_image": self.request.build_absolute_uri(variant.cover_image.url),
+                    "cover_image": self.request.build_absolute_uri(
+                        variant.cover_image.url
+                    ),
                     "price": variant.price,
                     "rating": variant.rating,
                     "attributes": self.get_variant_attributes(variant),
@@ -243,7 +267,9 @@ class ProductsApi(ViewSet):
 
 class ProductApi(APIView):
     def get(self, request):
-        products = Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
+        products = (
+            Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
+        )
         serailized_data = ProductListSerializer(
             products, many=True, context={"request": request}
         )
