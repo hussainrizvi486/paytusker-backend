@@ -11,24 +11,21 @@ class AccountsTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         d_user = User.objects.get(email=user.email)
         token["username"] = d_user.username
+        token["full_name"] = d_user.get_full_name()
         token["email"] = user.email
 
         if d_user.image:
             token["image"] = cls.context.get("request").build_absolute_uri(
                 d_user.image.url
             )
-            # token["image"] = d_user.image.url
         return token
 
 
 class UserAddressSerializer(serializers.ModelSerializer):
-    # date = serializers.DateTimeField(source="modified", format="%Y-%m-%d")
-
     class Meta:
         model = Address
         fields = [
             "id",
-            # "date",
             "address_title",
             "address_type",
             "country",

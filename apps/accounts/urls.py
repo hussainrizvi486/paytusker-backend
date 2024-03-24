@@ -22,7 +22,20 @@ urlpatterns = [
         name="token_obtain_pair",
     ),
     path("user/login/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path(
+        "user/address/get",
+        UserApi.as_view({"get": "get_user_address"}),
+    ),
+    path(
+        "user/address/add",
+        UserApi.as_view({"get": "add_user_address"}),
+    ),
+    path(
+        "user/address/update",
+        UserApi.as_view({"get": "edit_user_address"}),
+    ),
     path("register/", RegisterUser.as_view(), name="register_user"),
+    # old routes
     path(
         "get-user-details/",
         UserApi.as_view({"get": "get_user_details"}),

@@ -52,7 +52,7 @@ class OrderApi(ViewSet):
             except Exception:
                 filters = {}
 
-        orders_qs = Order.objects.filter(customer=customer)
+        orders_qs = Order.objects.filter(customer=customer).order_by("-creation")
 
         if filters.get("order_status"):
             orders_qs.filter(order_status=filters.get("order_status"))
@@ -72,19 +72,39 @@ class OrderApi(ViewSet):
                     "order_status": order.order_status,
                 }
 
-                order_items = exceute_sql_query(
-                    f"""SELECT
-                        p.product_name,
-                        p.cover_image,
-                        oi.rate,
-                        oi.qty,
-                        oi.amount
-                    FROM
-                        store_orderitems oi
-                        INNER JOIN store_product p ON oi.item_id = p.id
-                    WHERE
-                        oi.order_id = '{order.id}' """
+                order_items_qs = OrderItems.objects.filter(order=order).order_by(
+                    "-creation"
                 )
+                order_items = []
+                for oi in order_items_qs:
+                    order_items.append(
+                        {
+                            "product_name": oi.item.product_name,
+                            "cover_image": self.request.build_absolute_uri(
+                                oi.item.cover_image.url
+                            ),
+                            "rate": oi.rate,
+                            "qty": oi.qty,
+                            "amount": oi.amount,
+                        }
+                    )
+
+                # order_items = exceute_sql_query(
+                #     f"""SELECT
+                #         p.product_name,
+                #         p.cover_image,
+                #         oi.rate,
+                #         oi.creation,
+                #         oi.qty,
+                #         oi.amount
+                #     FROM
+                #         store_orderitems oi
+                #         INNER JOIN store_product p ON oi.item_id = p.id
+                #     WHERE
+                #         oi.order_id = '{order.id}'
+                #     ORDER BY DATE(oi.creation) DESC
+                #     """
+                # )
 
                 order_dict["items"] = order_items
                 data.append(order_dict)

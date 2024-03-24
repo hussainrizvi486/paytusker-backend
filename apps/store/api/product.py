@@ -37,6 +37,7 @@ class ProductsListPagination(PageNumberPagination):
 
 
 class ProductsApi(ViewSet):
+    # Product API Methods
     def search_products(self, request):
         query = request.GET.get("query")
         pagniator = ProductsListPagination()
@@ -117,99 +118,91 @@ class ProductsApi(ViewSet):
 
     def create_product(self, request):
         data: dict = request.data
-        item_category = None
-        item_type = data.get("item_type")
-        product_id = data.get("product_id")
-        req_type = data.get("req_type")
+        validated_product_data, message = self.validate_product_data(data)
 
+        if not validated_product_data:
+            return Response(data={"message": message})
+
+        product_object: dict = validated_product_data.get("product_object")
+        product_media_object: dict = validated_product_data.get("product_media_object")
+
+        try:
+            product = Product.objects.create(**product_object)
+            product.save()
+            if product:
+                for key in product_media_object.get("product_media_keys"):
+                    if product_media_object.get(key):
+                        media_obj = ProductMedia.objects.create(
+                            product=product, file=product_media_object.get(key)
+                        )
+                        media_obj.save()
+
+                return Response(
+                    data={
+                        "message": f"Product created {product.id} : {product.product_name}",
+                        "product_id": product.id,
+                        "product_media_ids": [
+                            obj.id
+                            for obj in ProductMedia.objects.filter(product=product)
+                        ],
+                    }
+                )
+        except Exception as e:
+            return Response(data=e)
+
+    # Product Utility Methods
+    def validate_product_data(self, data: dict):
         mandatory_fields = [
             "product_name",
             "price",
-            "net_price",
             "category_id",
-            "description",
+            # "description",
             "cover_image",
             "stock",
         ]
 
         for field in mandatory_fields:
             if field not in data.keys():
-                return Response(data=f"Missing required field: {field}")
+                return None, f"Missing required field: {field}"
 
-        if req_type == "create":
-            try:
-                _product = Product.objects.filter(id=data.get("server_id")).first()
-                if _product:
-                    return Response(
-                        data={
-                            "product_id": _product.id,
-                            "message": "Product already exist",
-                        }
-                    )
-            except Product.DoesNotExist:
-                ...
+            if data.get("item_type") == "003" and not data.get("template_id"):
+                return None, f"Item template missing"
 
-        if data.get("category_id"):
-            item_category = get_category(category_id=data.get("category_id"))
-        elif data.get("category_name"):
-            item_category = get_category(category_name=data.get("category_name"))
+        def filter_product_media_keys(key):
+            if str(key).startswith("product_media"):
+                return True
+            return False
 
+        print(type(data.get("cover_image")))
         product_object = {
             "product_name": data.get("product_name"),
-            "price": Decimal(data.get("price") or 0),
-            "net_price": Decimal(data.get("price") or 0),
-            "category": item_category,
-            "description": data.get("description") or "",
+            "description": data.get("description"),
+            "price": Decimal(data.get("price")),
+            "cover_image": data.get("cover_image"),
             "stock": data.get("stock"),
+            "category": get_category(data.get("category_id")),
         }
 
-        if data.get("cover_image"):
-            product_object["cover_image"] = data.get("cover_image")
+        product_media_object = {
+            "product_media_keys": list(filter(filter_product_media_keys, data.keys())),
+        }
 
-        if item_type == "003":
-            product_object["template"] = self.get_product_object(
-                data.get("template_id")
-            )
+        for key in product_media_object.get("product_media_keys"):
+            if data.get(key):
+                product_media_object[key] = data.get(key)
 
-        try:
-            product = None
-            if req_type == "create":
-                product = Product.objects.create(**product_object)
-                product.save()
-            else:
-                ...
-
-            if product:
-
-                def filter_product_media_keys(key):
-                    if str(key).startswith("product_media"):
-                        return True
-                    return False
-
-                product_file_keys = list(filter(filter_product_media_keys, data.keys()))
-
-                for key in product_file_keys:
-                    product_media_object = ProductMedia.objects.create(
-                        product=product, file=data.get(key)
-                    )
-                    product_media_object.save()
-
-                return Response(
-                    data={
-                        "message": f"Product created {product.id} : {product.product_name}",
-                        "product_id": product.id,
-                    }
-                )
-        except Exception as e:
-            return Response(data=e)
+        return {
+            "product_object": product_object,
+            "product_media_object": product_media_object,
+        }, ""
 
     def get_product_images(self, product_object):
         query_set = ProductMedia.objects.filter(product=product_object)
         images_list = [
             self.request.build_absolute_uri(row.file.url) for row in query_set
         ]
-        images_list.append(
-            self.request.build_absolute_uri(product_object.cover_image.url)
+        images_list.insert(
+            0, self.request.build_absolute_uri(product_object.cover_image.url)
         )
         return images_list
 
