@@ -11,6 +11,7 @@ urlpatterns = [
     ),
     path("product/search", ProductsApi.as_view({"get": "search_products"})),
     path("product/create", ProductsApi.as_view({"post": "create_product"})),
+    path("product/update", ProductsApi.as_view({"post": "update_product"})),
     # Cart Routes
     path("customer/cart/add", CartApi.as_view({"post": "add_to_cart"})),
     path("customer/cart/get", CartApi.as_view({"get": "get_cart_detail"})),

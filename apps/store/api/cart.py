@@ -46,29 +46,31 @@ class CartApi(ViewSet):
 
     def get_cart_detail(self, request):
         user = request.user
-        user_cart_data = {"items": []}
+        user_cart_data = {"items": None}
         customer = get_customer(user)
         cart_object = Cart.objects.filter(customer=customer).first()
 
         if not cart_object:
             return Response(data=[])
-        cart_items_queryset = CartItem.objects.filter(cart=cart_object)
 
-        for item in cart_items_queryset:
-            user_cart_data["items"].append(
-                {
-                    "id": item.id,
-                    "qty": item.qty,
-                    "rate": item.rate,
-                    "amount": item.amount,
-                    "formatted_amount": item.amount,
-                    "formatted_rate": item.rate,
-                    "product_name": item.item.product_name,
-                    "cover_image": self.request.build_absolute_uri(
-                        item.item.cover_image.url
-                    ),
-                }
-            )
+        cart_items_queryset = CartItem.objects.filter(cart=cart_object)
+        if cart_items_queryset:
+            user_cart_data = {"items": []}
+            for item in cart_items_queryset:
+                user_cart_data["items"].append(
+                    {
+                        "id": item.id,
+                        "qty": item.qty,
+                        "rate": item.rate,
+                        "amount": item.amount,
+                        "formatted_amount": item.amount,
+                        "formatted_rate": item.rate,
+                        "product_name": item.item.product_name,
+                        "cover_image": self.request.build_absolute_uri(
+                            item.item.cover_image.url
+                        ),
+                    }
+                )
 
         user_cart_data["total_qty"] = cart_object.total_qty
         user_cart_data["total_amount"] = cart_object.total_amount

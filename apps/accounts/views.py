@@ -43,7 +43,6 @@ class Register(APIView):
         #     password=password,
         # )
         # user.save()
-
         # if user:
         return JsonResponse({"message": "user created successfully", "success": True})
 

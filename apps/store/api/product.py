@@ -2,6 +2,7 @@ import json
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+from rest_framework import status
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
@@ -121,11 +122,10 @@ class ProductsApi(ViewSet):
         validated_product_data, message = self.validate_product_data(data)
 
         if not validated_product_data:
-            return Response(data={"message": message})
+            return Response(data={"message": message}, status=status.HTTP_403_FORBIDDEN)
 
         product_object: dict = validated_product_data.get("product_object")
         product_media_object: dict = validated_product_data.get("product_media_object")
-
         try:
             product = Product.objects.create(**product_object)
             product.save()
@@ -145,6 +145,40 @@ class ProductsApi(ViewSet):
                             obj.id
                             for obj in ProductMedia.objects.filter(product=product)
                         ],
+                    }
+                )
+        except Exception as e:
+            return Response(data=e)
+
+    def update_product(self, request):
+        data: dict = request.data
+        validated_product_data, message = self.validate_product_data(data)
+
+        if not validated_product_data:
+            return Response(data={"message": message})
+
+        product_object: dict = validated_product_data.get("product_object")
+        product_media_object: dict = validated_product_data.get("product_media_object")
+        try:
+            product = Product.objects.filter(id=data.get("product_id")).update(
+                **product_object
+            )
+            
+            product = Product.objects.get(id=data.get("product_id"))
+
+            ProductMedia.objects.filter(product=product_object).delete()
+            if product:
+                for key in product_media_object.get("product_media_keys"):
+                    if product_media_object.get(key):
+                        media_obj = ProductMedia.objects.create(
+                            product=product, file=product_media_object.get(key)
+                        )
+                        media_obj.save()
+
+                return Response(
+                    data={
+                        "message": f"Product successfully updated",
+                        "product_id": product.id,
                     }
                 )
         except Exception as e:
@@ -173,7 +207,6 @@ class ProductsApi(ViewSet):
                 return True
             return False
 
-        print(type(data.get("cover_image")))
         product_object = {
             "product_name": data.get("product_name"),
             "description": data.get("description"),
@@ -210,6 +243,7 @@ class ProductsApi(ViewSet):
         try:
             product = Product.objects.get(id=id)
             return product
+
         except Product.DoesNotExist:
             return None
 

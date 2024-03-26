@@ -15,13 +15,14 @@ class AccountsTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["email"] = user.email
 
         if d_user.image:
-            token["image"] = cls.context.get("request").build_absolute_uri(
-                d_user.image.url
-            )
+            token["image"] = d_user.image.url
         return token
 
 
 class UserAddressSerializer(serializers.ModelSerializer):
+    address_display = serializers.SerializerMethodField()
+    # address_display = address_line_1 + city + state + country
+
     class Meta:
         model = Address
         fields = [
@@ -32,4 +33,9 @@ class UserAddressSerializer(serializers.ModelSerializer):
             "state",
             "city",
             "address_line_1",
+            "address_display",
         ]
+
+    def get_address_display(self, obj):
+        return  f"{obj.address_line_1 or ""}, {obj.city or ""}, {obj.state or ""}, {obj.country or ""}"
+        

@@ -25,7 +25,6 @@ class UserApi(ViewSet):
 
     def get_user_address(self, request):
         address_id = request.GET.get("id")
-
         if address_id:
             address_query_set = Address.objects.get(id=address_id)
             if address_query_set:

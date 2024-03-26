@@ -15,9 +15,9 @@ def index(request):
 
 
 urlpatterns = [
-    path("user/register/", RegisterUser.as_view(), name="register_user"),
+    path("user/register", RegisterUser.as_view(), name="register_user"),
     path(
-        "user/login/",
+        "user/login",
         views.AccountsTokenObtainPairView.as_view(),
         name="token_obtain_pair",
     ),
@@ -28,11 +28,11 @@ urlpatterns = [
     ),
     path(
         "user/address/add",
-        UserApi.as_view({"get": "add_user_address"}),
+        UserApi.as_view({"post": "add_user_address"}),
     ),
     path(
         "user/address/update",
-        UserApi.as_view({"get": "edit_user_address"}),
+        UserApi.as_view({"post": "edit_user_address"}),
     ),
     path("register/", RegisterUser.as_view(), name="register_user"),
     # old routes

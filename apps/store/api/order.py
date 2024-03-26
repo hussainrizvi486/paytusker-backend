@@ -10,6 +10,7 @@ from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart
 from apps.store.models.product import Product
 from apps.store.permissions import IsCustomerUser
+from apps.accounts.models import Address
 
 
 @permission_classes([IsAuthenticated])
@@ -20,14 +21,18 @@ class OrderApi(ViewSet):
         if not customer:
             return Response(data="User is not a customer")
 
+        delivery_address = Address.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
         cart_items = CartItem.objects.all().filter(cart=customer_cart)
 
-        order = Order.objects.create()
-        order.customer = customer
-        order.order_status = "001"
-        order.payment_method = str(data.get("payment_method") or "")
-        order.payment_status = False
+        order = Order.objects.create(
+            customer=customer,
+            order_status="001",
+            payment_method=str(data.get("payment_method")),
+            payment_status=False,
+            delivery_address=delivery_address,
+        )
+
         for item in cart_items:
             OrderItems.objects.create(
                 order=order,
@@ -36,7 +41,6 @@ class OrderApi(ViewSet):
             )
 
         order.save()
-
         customer_cart.delete()
         cart_items.delete()
 

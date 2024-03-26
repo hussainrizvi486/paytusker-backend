@@ -4,6 +4,7 @@ from .product import Product
 from .customer import Customer
 from uuid import uuid4
 from server.utils import generate_snf_id
+from apps.accounts.models import Address
 
 ORDER_STATUS = {
     ("001", "Order Pending"),
@@ -41,6 +42,9 @@ class Order(BaseModel):
     )
     grand_total = models.DecimalField(
         decimal_places=2, max_digits=12, null=True, blank=True
+    )
+    delivery_address = models.ForeignKey(
+        Address, null=True, blank=True, on_delete=models.SET_NULL
     )
 
     def __str__(self) -> str:
