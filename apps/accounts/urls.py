@@ -15,14 +15,27 @@ def index(request):
 
 
 urlpatterns = [
-    path("user/register/", RegisterUser.as_view(), name="register_user"),
+    path("user/register", RegisterUser.as_view(), name="register_user"),
     path(
-        "user/login/",
+        "user/login",
         views.AccountsTokenObtainPairView.as_view(),
         name="token_obtain_pair",
     ),
     path("user/login/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path(
+        "user/address/get",
+        UserApi.as_view({"get": "get_user_address"}),
+    ),
+    path(
+        "user/address/add",
+        UserApi.as_view({"post": "add_user_address"}),
+    ),
+    path(
+        "user/address/update",
+        UserApi.as_view({"post": "edit_user_address"}),
+    ),
     path("register/", RegisterUser.as_view(), name="register_user"),
+    # old routes
     path(
         "get-user-details/",
         UserApi.as_view({"get": "get_user_details"}),

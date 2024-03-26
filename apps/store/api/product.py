@@ -2,6 +2,7 @@ import json
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+from rest_framework import status
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
@@ -37,6 +38,7 @@ class ProductsListPagination(PageNumberPagination):
 
 
 class ProductsApi(ViewSet):
+    # Product API Methods
     def search_products(self, request):
         query = request.GET.get("query")
         pagniator = ProductsListPagination()
@@ -110,8 +112,6 @@ class ProductsApi(ViewSet):
 
         if product.item_type == "003":
             product_varients = self.get_product_variants(product.template)
-            # for i in product_varients:
-            #     for attr in in
             product_data_object["product_template"] = product.template.id
             product_data_object["product_varients"] = product_varients
 
@@ -119,75 +119,123 @@ class ProductsApi(ViewSet):
 
     def create_product(self, request):
         data: dict = request.data
-        item_category = None
-        item_type = data.get("item_type")
+        validated_product_data, message = self.validate_product_data(data)
 
-        mandatory_fields = [
-            "product_name",
-            "price",
-            "net_price",
-            "category_id",
-            "description",
-            "cover_image",
-            "stock",
-        ]
-        for field in mandatory_fields:
-            if field not in data.keys():
-                return Response(data=f"Missing required field: {field}")
+        if not validated_product_data:
+            return Response(data={"message": message}, status=status.HTTP_403_FORBIDDEN)
 
-        if data.get("category_id"):
-            item_category = get_category(category_id=data.get("category_id"))
-
-        elif data.get("category_name"):
-            item_category = get_category(category_name=data.get("category_name"))
-
-        product_object = {
-            "product_name": data.get("product_name"),
-            "price": Decimal(data.get("price") or 0),
-            "net_price": Decimal(data.get("price") or 0),
-            "category": item_category,
-            "description": data.get("description") or "",
-            "stock": data.get("stock"),
-        }
-
-        if data.get("cover_image"):
-            product_object["cover_image"] = data.get("cover_image")
-
-        if item_type == "003":
-            product_object["template"] = self.get_product_object(
-                data.get("template_id")
-            )
-
+        product_object: dict = validated_product_data.get("product_object")
+        product_media_object: dict = validated_product_data.get("product_media_object")
         try:
             product = Product.objects.create(**product_object)
             product.save()
+            if product:
+                for key in product_media_object.get("product_media_keys"):
+                    if product_media_object.get(key):
+                        media_obj = ProductMedia.objects.create(
+                            product=product, file=product_media_object.get(key)
+                        )
+                        media_obj.save()
 
-            def filter_product_media_keys(key):
-                if str(key).startswith("product_media"):
-                    return True
-                return False
-
-            product_file_keys = list(filter(filter_product_media_keys, data.keys()))
-
-            for key in product_file_keys:
-                product_media_object = ProductMedia.objects.create(
-                    product=product, file=data.get(key)
+                return Response(
+                    data={
+                        "message": f"Product created {product.id} : {product.product_name}",
+                        "product_id": product.id,
+                        "product_media_ids": [
+                            obj.id
+                            for obj in ProductMedia.objects.filter(product=product)
+                        ],
+                    }
                 )
-                product_media_object.save()
-
-            return Response(
-                data=f"Product created {product.id} : {product.product_name} "
-            )
         except Exception as e:
             return Response(data=e)
+
+    def update_product(self, request):
+        data: dict = request.data
+        validated_product_data, message = self.validate_product_data(data)
+
+        if not validated_product_data:
+            return Response(data={"message": message})
+
+        product_object: dict = validated_product_data.get("product_object")
+        product_media_object: dict = validated_product_data.get("product_media_object")
+        try:
+            product = Product.objects.filter(id=data.get("product_id")).update(
+                **product_object
+            )
+            
+            product = Product.objects.get(id=data.get("product_id"))
+
+            ProductMedia.objects.filter(product=product_object).delete()
+            if product:
+                for key in product_media_object.get("product_media_keys"):
+                    if product_media_object.get(key):
+                        media_obj = ProductMedia.objects.create(
+                            product=product, file=product_media_object.get(key)
+                        )
+                        media_obj.save()
+
+                return Response(
+                    data={
+                        "message": f"Product successfully updated",
+                        "product_id": product.id,
+                    }
+                )
+        except Exception as e:
+            return Response(data=e)
+
+    # Product Utility Methods
+    def validate_product_data(self, data: dict):
+        mandatory_fields = [
+            "product_name",
+            "price",
+            "category_id",
+            # "description",
+            "cover_image",
+            "stock",
+        ]
+
+        for field in mandatory_fields:
+            if field not in data.keys():
+                return None, f"Missing required field: {field}"
+
+            if data.get("item_type") == "003" and not data.get("template_id"):
+                return None, f"Item template missing"
+
+        def filter_product_media_keys(key):
+            if str(key).startswith("product_media"):
+                return True
+            return False
+
+        product_object = {
+            "product_name": data.get("product_name"),
+            "description": data.get("description"),
+            "price": Decimal(data.get("price")),
+            "cover_image": data.get("cover_image"),
+            "stock": data.get("stock"),
+            "category": get_category(data.get("category_id")),
+        }
+
+        product_media_object = {
+            "product_media_keys": list(filter(filter_product_media_keys, data.keys())),
+        }
+
+        for key in product_media_object.get("product_media_keys"):
+            if data.get(key):
+                product_media_object[key] = data.get(key)
+
+        return {
+            "product_object": product_object,
+            "product_media_object": product_media_object,
+        }, ""
 
     def get_product_images(self, product_object):
         query_set = ProductMedia.objects.filter(product=product_object)
         images_list = [
             self.request.build_absolute_uri(row.file.url) for row in query_set
         ]
-        images_list.append(
-            self.request.build_absolute_uri(product_object.cover_image.url)
+        images_list.insert(
+            0, self.request.build_absolute_uri(product_object.cover_image.url)
         )
         return images_list
 
@@ -195,6 +243,7 @@ class ProductsApi(ViewSet):
         try:
             product = Product.objects.get(id=id)
             return product
+
         except Product.DoesNotExist:
             return None
 
@@ -223,7 +272,9 @@ class ProductsApi(ViewSet):
                 {
                     "id": variant.id,
                     "product_name": variant.product_name,
-                    "cover_image": self.request.build_absolute_uri(variant.cover_image.url),
+                    "cover_image": self.request.build_absolute_uri(
+                        variant.cover_image.url
+                    ),
                     "price": variant.price,
                     "rating": variant.rating,
                     "attributes": self.get_variant_attributes(variant),
@@ -243,7 +294,9 @@ class ProductsApi(ViewSet):
 
 class ProductApi(APIView):
     def get(self, request):
-        products = Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
+        products = (
+            Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
+        )
         serailized_data = ProductListSerializer(
             products, many=True, context={"request": request}
         )

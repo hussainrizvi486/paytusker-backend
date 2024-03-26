@@ -11,9 +11,10 @@ urlpatterns = [
     ),
     path("product/search", ProductsApi.as_view({"get": "search_products"})),
     path("product/create", ProductsApi.as_view({"post": "create_product"})),
+    path("product/update", ProductsApi.as_view({"post": "update_product"})),
     # Cart Routes
     path("customer/cart/add", CartApi.as_view({"post": "add_to_cart"})),
-    path("customer/cart/get", CartApi.as_view({"post": "add_to_cart"})),
+    path("customer/cart/get", CartApi.as_view({"get": "get_cart_detail"})),
     path("customer/cart/update", CartApi.as_view({"post": "update_cart_item"})),
     # order routes
     path("customer/order/create", OrderApi.as_view({"post": "create_order"})),
@@ -27,7 +28,10 @@ urlpatterns = [
         "customer/reviews/get",
         CustomerFunctions.as_view({"get": "get_order_review"}),
     ),
-    
+    path(
+        "customer/reviews/pending",
+        CustomerFunctions.as_view({"get": "to_review_items"}),
+    ),
     # old routes
     path("add-to-cart", CartApi.as_view({"post": "add_to_cart"})),
     path("get-cart", CartApi.as_view({"get": "get_cart_detail"})),

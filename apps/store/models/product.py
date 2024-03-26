@@ -28,7 +28,7 @@ class Product(BaseModel):
         Category, on_delete=models.SET_NULL, null=True, blank=True
     )
     cover_image = models.ImageField(max_length=10000, null=True)
-    rating = models.IntegerField(null=True, blank=True)
+    rating = models.IntegerField(null=True, blank=True, default=9)
     item_type = models.CharField(
         max_length=999, choices=PRODUCT_TYPES, default="001", null=True, blank=True
     )
@@ -41,8 +41,14 @@ class Product(BaseModel):
     def __str__(self) -> str:
         return self.product_name
 
+    def get_product_images(self):
+        query_set = ProductMedia.objects.filter(product=self.price)
+        images_list = [row.file.url for row in query_set]
+        images_list.insert(0, self.cover_image.url)
+        return images_list
+
     def save(self, *args, **kwargs) -> None:
-        self.net_price = self.price
+        # self.net_price = self.price
         return super().save(*args, **kwargs)
 
 
