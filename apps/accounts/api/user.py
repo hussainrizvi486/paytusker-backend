@@ -49,7 +49,7 @@ class UserApi(ViewSet):
             country=data.get("country"),
             state=data.get("state"),
             city=data.get("city"),
-            address_line_1=data.get("details"),
+            address_line_1=data.get("address_line_1"),
         )
 
         address_object.save()
