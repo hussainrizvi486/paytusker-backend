@@ -164,13 +164,13 @@ class CustomerFunctions(ViewSet):
         filters = request.GET.get("filters") or {}
         customer = get_customer(request.user)
         response_data = []
-        orders_reviews = OrderReview.objects.filter(customer=customer)
+        orders_reviews = OrderReview.objects.filter(customer=customer).order_by("-creation")
 
         for review in orders_reviews:
             response_data.append(
                 {
                     "product_name": review.product.product_name,
-                    "product_image": review.product.cover_image,
+                    "product_image": request.build_absolute_uri(review.product.cover_image.url),
                     "order_id": review.order.order_id,
                     "order_date": review.order.order_date.strftime("%d-%m-%Y"),
                     "review_date": review.creation.strftime("%d-%m-%Y"),
@@ -189,7 +189,7 @@ class CustomerFunctions(ViewSet):
     def to_review_items(self, request):
         customer = get_customer(request.user)
         order_items = OrderItems.objects.filter(
-            order__customer=customer, order__delivery_status=True, has_review=False
+            order__customer=customer, has_review=False
         )
         data = []
 
@@ -198,7 +198,9 @@ class CustomerFunctions(ViewSet):
                 {
                     "order_id": row.order.order_id,
                     "product_name": row.item.product_name,
-                    "product_image": row.item.cover_image,
+                    "product_image": request.build_absolute_uri(
+                        row.item.cover_image.url
+                    ),
                     "product_id": row.item.id,
                     "amount": row.amount,
                     "qty": row.qty,

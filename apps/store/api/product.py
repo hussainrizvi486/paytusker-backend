@@ -141,10 +141,10 @@ class ProductsApi(ViewSet):
                     data={
                         "message": f"Product created {product.id} : {product.product_name}",
                         "product_id": product.id,
-                        "product_media_ids": [
-                            obj.id
-                            for obj in ProductMedia.objects.filter(product=product)
-                        ],
+                        # "product_media_ids": [
+                        #     obj.id
+                        #     for obj in ProductMedia.objects.filter(product=product)
+                        # ],
                     }
                 )
         except Exception as e:
@@ -163,8 +163,8 @@ class ProductsApi(ViewSet):
             product = Product.objects.filter(id=data.get("product_id")).update(
                 **product_object
             )
-            
-            product = Product.objects.get(id=data.get("product_id"))
+
+            # product = Product.objects.get(id=data.get("product_id"))
 
             ProductMedia.objects.filter(product=product_object).delete()
             if product:
@@ -178,11 +178,11 @@ class ProductsApi(ViewSet):
                 return Response(
                     data={
                         "message": f"Product successfully updated",
-                        "product_id": product.id,
+                        # "product_id": product.id,
                     }
                 )
         except Exception as e:
-            return Response(data=e)
+            return Response(data=str(e), status=status.HTTP_403_FORBIDDEN)
 
     # Product Utility Methods
     def validate_product_data(self, data: dict):
