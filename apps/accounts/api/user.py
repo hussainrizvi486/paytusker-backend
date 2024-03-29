@@ -61,7 +61,7 @@ class UserApi(ViewSet):
 
         if request_data.get("action") == "remove":
             try:
-                Address.objects.get(id=address_id).delete()
+                Address.objects.filter(id=address_id).delete()
                 return Response(data="Address deleted")
 
             except Address.DoesNotExist:

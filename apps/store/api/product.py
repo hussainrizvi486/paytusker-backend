@@ -15,30 +15,33 @@ from apps.store.models.product import (
     ProductVariantAttribute,
 )
 from apps.store.utils import get_category
+from server.utils import format_currency
 
 
 class ProductsListPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = "page_size"
 
-    def get_paginated_response(self, data):
-        return Response(
-            {
-                "links": {
-                    "next": self.get_next_link(),
-                    "previous": self.get_previous_link(),
-                },
-                "count": self.page.paginator.count,
-                "total_pages": self.page.paginator.num_pages,
-                "results": data,
-                "page_size": self.page_size,
-                "current_page": self.page.number,
-            }
-        )
+    def get_paginated_response(self, data, options={}):
+        response_dict = {
+            "links": {
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+            },
+            "count": self.page.paginator.count,
+            "total_pages": self.page.paginator.num_pages,
+            "results": data,
+            "page_size": self.page_size,
+            "current_page": self.page.number,
+        }
+        if options:
+            response_dict.update(options)
+        return Response(response_dict)
 
 
 class ProductsApi(ViewSet):
     # Product API Methods
+    # search class starts
     def search_products(self, request):
         query = request.GET.get("query")
         pagniator = ProductsListPagination()
@@ -77,14 +80,45 @@ class ProductsApi(ViewSet):
                         price__lte=Decimal(filters.get("max_price"))
                     )
 
+                filter_attributes = self.search_product_queryset_attributes(
+                    products_queryset
+                )
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(
                     products_res, many=True, context={"request": request}
                 )
-                return pagniator.get_paginated_response(products_data.data)
+
+                return pagniator.get_paginated_response(
+                    products_data.data, {"filter_attributes": filter_attributes}
+                )
 
             return Response(data={"results": [], "message": "No items Found"})
         return Response(data="Please enter a query")
+
+    def search_product_queryset_attributes(self, queryset):
+        variant_attributes_data = [{}]
+        variant_queryset = ProductVariantAttribute.objects.filter(product__in=queryset)
+
+        for object in variant_queryset:
+            variant_attributes_data.append(
+                {
+                    "attribute": object.attribute.attribute_name,
+                    "attribute_value": object.attribute_value,
+                }
+            )
+        variant_attributes_dict = {}
+        unique_keys = [
+            obj.attribute.attribute_name
+            for obj in variant_queryset.distinct("attribute")
+        ]
+
+        # if variant_attributes_data:
+            # for val in variant_attributes_data:
+                
+        # val.()
+        return variant_attributes_data
+
+    # search class ends
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
@@ -101,7 +135,7 @@ class ProductsApi(ViewSet):
             "id": product.id,
             "product_name": product.product_name,
             "product_price": product.price,
-            "formatted_price": "${:0,.0f}".format(product.price),
+            "formatted_price": format_currency(product.price),
             "cover_image": product.cover_image.url,
             "images": product_images,
             "rating": product.rating or 0,
@@ -114,6 +148,8 @@ class ProductsApi(ViewSet):
             product_varients = self.get_product_variants(product.template)
             product_data_object["product_template"] = product.template.id
             product_data_object["product_varients"] = product_varients
+            variants_attributes = self.get_variant_attributes(product)
+            product_data_object["variants_attributes"] = variants_attributes
 
         return Response(data=product_data_object)
 
@@ -163,8 +199,6 @@ class ProductsApi(ViewSet):
             product = Product.objects.filter(id=data.get("product_id")).update(
                 **product_object
             )
-
-            # product = Product.objects.get(id=data.get("product_id"))
 
             ProductMedia.objects.filter(product=product_object).delete()
             if product:
@@ -277,7 +311,7 @@ class ProductsApi(ViewSet):
                     ),
                     "price": variant.price,
                     "rating": variant.rating,
-                    "attributes": self.get_variant_attributes(variant),
+                    # "attributes": self.get_variant_attributes(variant),
                 }
             )
         return varients_data
@@ -285,11 +319,19 @@ class ProductsApi(ViewSet):
     def get_variant_attributes(self, varient_object):
         variant_attr_object = ProductVariantAttribute.objects.filter(
             product=varient_object
-        ).first()
-        return {
-            "attribute": variant_attr_object.attribute.attribute_name,
-            "attribute_value": variant_attr_object.attribute_value,
-        }
+        )
+        attributes = []
+        if variant_attr_object:
+            for attr in variant_attr_object.iterator():
+                attributes.append(
+                    {
+                        "attribute": (
+                            attr.attribute.attribute_name if attr.attribute else None
+                        ),
+                        "attribute_value": attr.attribute_value,
+                    }
+                )
+        return attributes
 
 
 class ProductApi(APIView):

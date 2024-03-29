@@ -5,10 +5,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 import json
 from server.utils import exceute_sql_query
-from apps.store.utils import get_customer
+from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart
 from apps.store.models.product import Product
+from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
 from apps.accounts.models import Address
 
@@ -150,9 +151,25 @@ class CustomerFunctions(ViewSet):
                 rating=req_data.get("rating"),
                 review_content=req_data.get("review_content"),
             )
+
+            def filter_media_keys(key):
+                if str(key).startswith("review_media"):
+                    return True
+                return False
+
             review.save()
             order_item.has_review = True
             order_item.save()
+            review_media_keys = filter(filter_media_keys, req_data.keys())
+            if review_media_keys:
+                for key in review_media_keys:
+                    if req_data.get(key):
+                        ModelMedia.objects.create(
+                            model_name="OrderReview",
+                            file=req_data.get(key),
+                            field_id=review.id,
+                        )
+
             return Response(data="Review Added", status=status.HTTP_201_CREATED)
         return Response(data="Data is missing", status=status.HTTP_204_NO_CONTENT)
 
@@ -160,22 +177,28 @@ class CustomerFunctions(ViewSet):
         self,
         request,
     ):
-
         filters = request.GET.get("filters") or {}
         customer = get_customer(request.user)
         response_data = []
-        orders_reviews = OrderReview.objects.filter(customer=customer).order_by("-creation")
+        orders_reviews = OrderReview.objects.filter(customer=customer).order_by(
+            "-creation"
+        )
 
         for review in orders_reviews:
             response_data.append(
                 {
                     "product_name": review.product.product_name,
-                    "product_image": request.build_absolute_uri(review.product.cover_image.url),
+                    "product_image": request.build_absolute_uri(
+                        review.product.cover_image.url
+                    ),
                     "order_id": review.order.order_id,
                     "order_date": review.order.order_date.strftime("%d-%m-%Y"),
                     "review_date": review.creation.strftime("%d-%m-%Y"),
                     "review_content": review.review_content,
                     "rating": review.rating,
+                    "review_media": get_serialized_model_media(
+                        "OrderReview", review.id, request
+                    ),
                 }
             )
 

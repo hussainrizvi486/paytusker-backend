@@ -83,8 +83,19 @@ def update_products():
 
 
 ID_GEN = SnowflakeGenerator(42)
-
-
 def generate_snf_id():
     id = next(ID_GEN)
     return id
+
+
+def format_currency(value):
+    formatted_value = "0.00"
+    try:
+        formatted_value = "{:,.2f}".format(value)
+    except Exception:
+        formatted_value = "0.00"
+
+    currency_symbol = "$"
+    formatted_value = f"{currency_symbol}{formatted_value}"
+
+    return formatted_value
