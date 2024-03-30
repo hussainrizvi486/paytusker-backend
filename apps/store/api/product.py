@@ -113,8 +113,8 @@ class ProductsApi(ViewSet):
         ]
 
         # if variant_attributes_data:
-            # for val in variant_attributes_data:
-                
+        # for val in variant_attributes_data:
+
         # val.()
         return variant_attributes_data
 
@@ -343,3 +343,80 @@ class ProductApi(APIView):
             products, many=True, context={"request": request}
         )
         return Response(status=200, data=serailized_data.data)
+
+
+class SearchProductsApi(APIView):
+    def get(self, request):
+        query = request.GET.get("query")
+        pagniator = ProductsListPagination()
+        filters = {}
+        if request.GET.get("filters"):
+            try:
+                filters = json.loads(request.GET.get("filters"))
+            except Exception:
+                filters = {}
+
+        if query:
+            query = str(query).strip()
+            vector = SearchVector("product_name", "description")
+            search_query = SearchQuery(query)
+            products_queryset = (
+                Product.objects.annotate(
+                    rank=SearchRank(vector=vector, query=search_query)
+                )
+                .exclude(item_type="002")
+                .filter(rank__gte=0.001)
+                .order_by("-rank")
+            )
+
+            if products_queryset:
+                if filters.get("category_id"):
+                    category = Category.objects.get(id=filters.get("category_id"))
+                    products_queryset = products_queryset.filter(category=category)
+
+                if filters.get("min_price"):
+                    products_queryset = products_queryset.filter(
+                        price__gte=Decimal(filters.get("min_price"))
+                    )
+
+                if filters.get("max_price"):
+                    products_queryset = products_queryset.filter(
+                        price__lte=Decimal(filters.get("max_price"))
+                    )
+                filters_attributes = self.get_search_product_attributes(
+                    products_queryset
+                )
+                products_res = pagniator.paginate_queryset(products_queryset, request)
+                products_data = ProductListSerializer(
+                    products_res, many=True, context={"request": request}
+                )
+                return pagniator.get_paginated_response(
+                    products_data.data, {"filters_attributes": filters_attributes}
+                )
+
+            return Response(data={"results": [], "message": "No items Found"})
+        return Response(data="Please enter a query")
+
+    def get_search_product_attributes(self, products_queryset):
+        variant_queryset = ProductVariantAttribute.objects.filter(
+            product__in=products_queryset
+        )
+        attribute_object = {}
+        serialized_variant_queryset = []
+        for attr in variant_queryset:
+            serialized_variant_queryset.append(
+                {
+                    "attribute": (
+                        attr.attribute.attribute_name if attr.attribute else None
+                    ),
+                    "attribute_value": attr.attribute_value,
+                }
+            )
+
+        for dict in serialized_variant_queryset:
+            if dict.get("attribute") in attribute_object:
+                attribute_object[dict.get("attribute")].add(dict.get("attribute_value"))
+            else:
+                attribute_object[dict.get("attribute")] = {dict.get("attribute_value")}
+
+        return attribute_object
