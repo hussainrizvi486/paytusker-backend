@@ -1,10 +1,12 @@
 from django.contrib import admin
+from apps.store.models.base import ModelMedia
 from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
-    ProductAttribute,
+    # ProductAttribute,
 )
+
 from apps.store.models.common import Discount, Category
 from apps.store.models.customer import Customer, Cart, CartItem
 from apps.store.models.order import Order, OrderItems, OrderReview
@@ -30,7 +32,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Product, ProductAdmin)
-admin.site.register(ProductAttribute)
+# admin.site.register(ProductAttribute)
 admin.site.register(Discount)
 admin.site.register(Category)
 admin.site.register(Order)
@@ -39,3 +41,4 @@ admin.site.register(Customer)
 admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(OrderReview)
+admin.site.register(ModelMedia)

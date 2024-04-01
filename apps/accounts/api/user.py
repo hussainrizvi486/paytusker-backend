@@ -31,14 +31,14 @@ class UserApi(ViewSet):
                 print(address_query_set)
                 serailized_data = UserAddressSerializer(address_query_set)
                 return Response(data=serailized_data.data)
-            return Response(data=[])
+            return Response(data=None)
         else:
             address_query_set = Address.objects.filter(user=request.user)
             serailized_data = UserAddressSerializer(address_query_set, many=True)
             if serailized_data.data:
                 return Response(data=serailized_data.data)
 
-            return Response(data=[])
+            return Response(data=None)
 
     def add_user_address(self, request):
         data = request.data
@@ -49,7 +49,7 @@ class UserApi(ViewSet):
             country=data.get("country"),
             state=data.get("state"),
             city=data.get("city"),
-            address_line_1=data.get("details"),
+            address_line_1=data.get("address_line_1"),
         )
 
         address_object.save()
@@ -61,7 +61,7 @@ class UserApi(ViewSet):
 
         if request_data.get("action") == "remove":
             try:
-                Address.objects.get(id=address_id).delete()
+                Address.objects.filter(id=address_id).delete()
                 return Response(data="Address deleted")
 
             except Address.DoesNotExist:
