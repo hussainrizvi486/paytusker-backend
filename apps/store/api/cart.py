@@ -20,11 +20,8 @@ class CartApi(ViewSet):
         product_id = data.get("product_id")
         qty = data.get("qty") or 1
         product = Product.objects.get(id=product_id)
-
         customer = get_customer(user)
-
         cart, created = Cart.objects.get_or_create(customer=customer)
-
         try:
             cart_item = CartItem.objects.get(item=product, cart=cart)
             cart_item_qty = Decimal(cart_item.qty)
@@ -32,6 +29,7 @@ class CartApi(ViewSet):
             cart_item.rate = product.price
             cart_item.amount = product.price * cart_item_qty
             cart_item.save()
+
         except CartItem.DoesNotExist:
             new_cart_item = CartItem.objects.create(
                 item=product,

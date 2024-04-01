@@ -31,14 +31,14 @@ class UserApi(ViewSet):
                 print(address_query_set)
                 serailized_data = UserAddressSerializer(address_query_set)
                 return Response(data=serailized_data.data)
-            return Response(data=[])
+            return Response(data=None)
         else:
             address_query_set = Address.objects.filter(user=request.user)
             serailized_data = UserAddressSerializer(address_query_set, many=True)
             if serailized_data.data:
                 return Response(data=serailized_data.data)
 
-            return Response(data=[])
+            return Response(data=None)
 
     def add_user_address(self, request):
         data = request.data

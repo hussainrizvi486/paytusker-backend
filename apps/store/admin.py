@@ -4,7 +4,7 @@ from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
-    ProductAttribute,
+    # ProductAttribute,
 )
 
 from apps.store.models.common import Discount, Category
@@ -32,7 +32,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Product, ProductAdmin)
-admin.site.register(ProductAttribute)
+# admin.site.register(ProductAttribute)
 admin.site.register(Discount)
 admin.site.register(Category)
 admin.site.register(Order)

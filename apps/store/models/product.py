@@ -28,7 +28,7 @@ class Product(BaseModel):
         Category, on_delete=models.SET_NULL, null=True, blank=True
     )
     cover_image = models.ImageField(max_length=10000, null=True)
-    rating = models.IntegerField(null=True, blank=True, default=9)
+    rating = models.IntegerField(null=True, blank=True, default=0)
     item_type = models.CharField(
         max_length=999, choices=PRODUCT_TYPES, default="001", null=True, blank=True
     )
@@ -60,14 +60,14 @@ class ProductMedia(BaseModel):
         return self.product.product_name
 
 
-class ProductAttribute(BaseModel):
-    attribute_name = models.CharField(max_length=999)
+# class ProductAttribute(BaseModel):
+#     attribute_name = models.CharField(max_length=999)
 
-    def __str__(self) -> str:
-        return self.attribute_name
+#     def __str__(self) -> str:
+#         return self.attribute_name
 
 
 class ProductVariantAttribute(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    attribute = models.ForeignKey(ProductAttribute, on_delete=models.CASCADE)
+    attribute = models.CharField(max_length=999)
     attribute_value = models.CharField(max_length=999)

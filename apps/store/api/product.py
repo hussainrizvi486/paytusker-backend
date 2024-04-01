@@ -41,94 +41,16 @@ class ProductsListPagination(PageNumberPagination):
 
 class ProductsApi(ViewSet):
     # Product API Methods
-    # search class starts
-    def search_products(self, request):
-        query = request.GET.get("query")
-        pagniator = ProductsListPagination()
-        filters = {}
-        if request.GET.get("filters"):
-            try:
-                filters = json.loads(request.GET.get("filters"))
-            except Exception:
-                filters = {}
-
-        if query:
-            query = str(query).strip()
-            vector = SearchVector("product_name", "description")
-            search_query = SearchQuery(query)
-            products_queryset = (
-                Product.objects.annotate(
-                    rank=SearchRank(vector=vector, query=search_query)
-                )
-                .exclude(item_type="002")
-                .filter(rank__gte=0.001)
-                .order_by("-rank")
-            )
-
-            if products_queryset:
-                if filters.get("category_id"):
-                    category = Category.objects.get(id=filters.get("category_id"))
-                    products_queryset = products_queryset.filter(category=category)
-
-                if filters.get("min_price"):
-                    products_queryset = products_queryset.filter(
-                        price__gte=Decimal(filters.get("min_price"))
-                    )
-
-                if filters.get("max_price"):
-                    products_queryset = products_queryset.filter(
-                        price__lte=Decimal(filters.get("max_price"))
-                    )
-
-                filter_attributes = self.search_product_queryset_attributes(
-                    products_queryset
-                )
-                products_res = pagniator.paginate_queryset(products_queryset, request)
-                products_data = ProductListSerializer(
-                    products_res, many=True, context={"request": request}
-                )
-
-                return pagniator.get_paginated_response(
-                    products_data.data, {"filter_attributes": filter_attributes}
-                )
-
-            return Response(data={"results": [], "message": "No items Found"})
-        return Response(data="Please enter a query")
-
-    def search_product_queryset_attributes(self, queryset):
-        variant_attributes_data = [{}]
-        variant_queryset = ProductVariantAttribute.objects.filter(product__in=queryset)
-
-        for object in variant_queryset:
-            variant_attributes_data.append(
-                {
-                    "attribute": object.attribute.attribute_name,
-                    "attribute_value": object.attribute_value,
-                }
-            )
-        variant_attributes_dict = {}
-        unique_keys = [
-            obj.attribute.attribute_name
-            for obj in variant_queryset.distinct("attribute")
-        ]
-
-        # if variant_attributes_data:
-        # for val in variant_attributes_data:
-
-        # val.()
-        return variant_attributes_data
-
-    # search class ends
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
 
         if not product_id:
-            return Response(data={"message": "Please give the product"})
+            return Response(data={"message": "Please give the product"}, status=status.HTTP_403_FORBIDDEN)
 
         product = self.get_product_object(product_id)
         if not product:
-            return Response(data={"message": "Product not found"})
+            return Response(data={"message": "Product not found"}, status=status.HTTP_403_FORBIDDEN)
 
         product_images = self.get_product_images(product)
         product_data_object = {
@@ -136,7 +58,7 @@ class ProductsApi(ViewSet):
             "product_name": product.product_name,
             "product_price": product.price,
             "formatted_price": format_currency(product.price),
-            "cover_image": product.cover_image.url,
+            "cover_image": product.cover_image.url if product.cover_image else None,
             "images": product_images,
             "rating": product.rating or 0,
             "category": product.category.name if product.category else None,
@@ -145,9 +67,11 @@ class ProductsApi(ViewSet):
         }
 
         if product.item_type == "003":
-            product_varients = self.get_product_variants(product.template)
-            product_data_object["product_template"] = product.template.id
-            product_data_object["product_varients"] = product_varients
+            if product.template:
+                product_data_object["product_template"] = product.template.id
+                product_varients = self.get_product_variants(product.template)
+                product_data_object["product_varients"] = product_varients
+
             variants_attributes = self.get_variant_attributes(product)
             product_data_object["variants_attributes"] = variants_attributes
 
@@ -268,9 +192,10 @@ class ProductsApi(ViewSet):
         images_list = [
             self.request.build_absolute_uri(row.file.url) for row in query_set
         ]
-        images_list.insert(
-            0, self.request.build_absolute_uri(product_object.cover_image.url)
-        )
+        if product_object.cover_image:
+            images_list.insert(
+                0, self.request.build_absolute_uri(product_object.cover_image.url)
+            )
         return images_list
 
     def get_product_object(self, id):
@@ -301,36 +226,35 @@ class ProductsApi(ViewSet):
     def get_product_variants(self, product_object):
         product_varients = Product.objects.filter(template=product_object)
         varients_data = []
-        for variant in product_varients:
-            varients_data.append(
-                {
-                    "id": variant.id,
-                    "product_name": variant.product_name,
-                    "cover_image": self.request.build_absolute_uri(
-                        variant.cover_image.url
-                    ),
-                    "price": variant.price,
-                    "rating": variant.rating,
-                    # "attributes": self.get_variant_attributes(variant),
-                }
-            )
+        if product_varients:
+            for variant in product_varients:
+                varients_data.append(
+                    {
+                        "id": variant.id,
+                        "product_name": variant.product_name,
+                        "cover_image": self.request.build_absolute_uri(
+                            variant.cover_image.url if variant.cover_image else None
+                        ),
+                        "price": variant.price,
+                        "rating": variant.rating,
+                    }
+                )
         return varients_data
 
     def get_variant_attributes(self, varient_object):
+        attributes = []
         variant_attr_object = ProductVariantAttribute.objects.filter(
             product=varient_object
         )
-        attributes = []
         if variant_attr_object:
             for attr in variant_attr_object.iterator():
                 attributes.append(
                     {
-                        "attribute": (
-                            attr.attribute.attribute_name if attr.attribute else None
-                        ),
+                        "attribute": attr.attribute,
                         "attribute_value": attr.attribute_value,
                     }
                 )
+
         return attributes
 
 
