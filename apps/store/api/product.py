@@ -213,7 +213,9 @@ class ProductsApi(ViewSet):
         for obj in product_reviews:
             reviews_data.append(
                 {
-                    "user_image": obj.customer.user.image.url,
+                    "user_image": (
+                        obj.customer.user.image.url if obj.customer.user.image else None
+                    ),
                     "review_content": obj.review_content,
                     "rating": obj.rating or 0,
                     "customer_name": obj.customer.customer_name,
