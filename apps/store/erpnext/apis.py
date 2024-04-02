@@ -65,6 +65,11 @@ class ERPNextProductsApi(ViewSet):
         )
 
     def validate_product_data(self, data: dict):
+        product_object = {}
+
+        if data.get("server_id"):
+            product_object["server_id"] = data.get("server_id")
+
         if data.get("item_type") == "002":
             mandatory_fields = [
                 "product_name",
