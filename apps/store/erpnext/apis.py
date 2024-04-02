@@ -21,12 +21,13 @@ class ERPNextProductsApi(ViewSet):
 
         product_object: dict = validated_product_data.get("product_object")
         product_media_object: dict = validated_product_data.get("product_media_object")
-        variants_object: list = json.loads(
-            validated_product_data.get("variants_object")
-        )
+        variants_object = None
+        if validated_product_data.get("variants_object"):
+            variants_object: list = json.loads(
+                validated_product_data.get("variants_object")
+            )
+
         product = None
-        for i in variants_object:
-            print(i)
 
         if product_object.get("server_id"):
             product = Product.objects.get(id=product_object.get("server_id"))
@@ -48,12 +49,13 @@ class ERPNextProductsApi(ViewSet):
 
         if product and product.item_type == "003":
             ProductVariantAttribute.objects.filter(product=product).delete()
-            for object in variants_object:
-                ProductVariantAttribute.objects.create(
-                    product=product,
-                    attribute=object.get("attribute"),
-                    attribute_value=object.get("attribute_value"),
-                )
+            if variants_object:
+                for object in variants_object:
+                    ProductVariantAttribute.objects.create(
+                        product=product,
+                        attribute=object.get("attribute"),
+                        attribute_value=object.get("attribute_value"),
+                    )
 
         return Response(
             data={
