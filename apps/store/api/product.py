@@ -46,11 +46,16 @@ class ProductsApi(ViewSet):
         product_id = request.GET.get("id")
 
         if not product_id:
-            return Response(data={"message": "Please give the product"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                data={"message": "Please give the product"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         product = self.get_product_object(product_id)
         if not product:
-            return Response(data={"message": "Product not found"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                data={"message": "Product not found"}, status=status.HTTP_403_FORBIDDEN
+            )
 
         product_images = self.get_product_images(product)
         product_data_object = {
@@ -213,7 +218,9 @@ class ProductsApi(ViewSet):
         for obj in product_reviews:
             reviews_data.append(
                 {
-                    "user_image": obj.customer.user.image.url,
+                    "user_image": (
+                        obj.customer.user.image.url if obj.customer.user.image else None
+                    ),
                     "review_content": obj.review_content,
                     "rating": obj.rating or 0,
                     "customer_name": obj.customer.customer_name,
