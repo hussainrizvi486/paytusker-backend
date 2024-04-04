@@ -41,14 +41,24 @@ class Product(BaseModel):
     def __str__(self) -> str:
         return self.product_name
 
-    def get_product_images(self):
-        query_set = ProductMedia.objects.filter(product=self.price)
-        images_list = [row.file.url for row in query_set]
-        images_list.insert(0, self.cover_image.url)
+    def get_product_images(self, request=None):
+        query_set = ProductMedia.objects.filter(product=self)
+        images_list = []
+        if query_set:
+            if request:
+                images_list = [
+                    request.build_absolute_uri(row.file.url) for row in query_set
+                ]
+                if self.cover_image:
+                    images_list.insert(
+                        0, request.build_absolute_uri(self.cover_image.url)
+                    )
+            else:
+                images_list = [row.file.url for row in query_set]
+                images_list.insert(0, self.cover_image.url)
         return images_list
 
     def save(self, *args, **kwargs) -> None:
-        # self.net_price = self.price
         return super().save(*args, **kwargs)
 
 

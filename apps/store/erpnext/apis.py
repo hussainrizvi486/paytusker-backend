@@ -8,6 +8,7 @@ from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
+    Category,
 )
 
 
@@ -21,6 +22,7 @@ class ERPNextProductsApi(ViewSet):
 
         product_object: dict = validated_product_data.get("product_object")
         product_media_object: dict = validated_product_data.get("product_media_object")
+        product_id = validated_product_data.get("product_id")
         variants_object = None
         if validated_product_data.get("variants_object"):
             variants_object: list = json.loads(
@@ -28,9 +30,9 @@ class ERPNextProductsApi(ViewSet):
             )
 
         product = None
-
-        if product_object.get("server_id"):
-            product = Product.objects.get(id=product_object.get("server_id"))
+        if product_id:
+            Product.objects.filter(id=product_id).update(**product_object)
+            product = Product.objects.get(id=product_id)
             ProductMedia.objects.filter(product=product).delete()
         else:
             try:
@@ -47,28 +49,28 @@ class ERPNextProductsApi(ViewSet):
                     )
                     media_obj.save()
 
-        if product and product.item_type == "003":
-            ProductVariantAttribute.objects.filter(product=product).delete()
-            if variants_object:
-                for object in variants_object:
-                    ProductVariantAttribute.objects.create(
-                        product=product,
-                        attribute=object.get("attribute"),
-                        attribute_value=object.get("attribute_value"),
-                    )
+        if product:
+            if product.item_type == "003":
+                ProductVariantAttribute.objects.filter(product=product).delete()
+                if variants_object:
+                    for object in variants_object:
+                        print(object)
+                        ProductVariantAttribute.objects.create(
+                            product=product,
+                            attribute=object.get("attribute"),
+                            attribute_value=object.get("attribute_value"),
+                        )
 
         return Response(
             data={
-                "message": f"Product created {product.id} : {product.product_name}",
+                "message": f"Product sync successfully!",
                 "product_id": product.id,
+                "product_name": product.product_name,
             }
         )
 
     def validate_product_data(self, data: dict):
         product_object = {}
-
-        if data.get("server_id"):
-            product_object["server_id"] = data.get("server_id")
 
         if data.get("item_type") == "002":
             mandatory_fields = [
@@ -96,6 +98,7 @@ class ERPNextProductsApi(ViewSet):
             return {
                 "product_object": product_object,
                 "product_media_object": {},
+                "product_id": data.get("product_id"),
             }, None
 
         mandatory_fields = [
@@ -120,12 +123,13 @@ class ERPNextProductsApi(ViewSet):
 
         product_object = {
             "product_name": data.get("product_name"),
-            "description": data.get("description"),
+            "description": data.get("description") or data.get("product_name"),
             "price": Decimal(data.get("price")),
             "cover_image": data.get("cover_image"),
             "stock": data.get("stock"),
             "category": get_category(data.get("category_id")),
             "item_type": data.get("item_type"),
+            "template": Product.objects.get(id=data.get("template_id")),
         }
 
         variants_object = data.get("variant_attributes")
@@ -142,4 +146,87 @@ class ERPNextProductsApi(ViewSet):
             "product_object": product_object,
             "product_media_object": product_media_object,
             "variants_object": variants_object,
+            "product_id": data.get("product_id"),
         }, None
+
+    def remove_product(self, request):
+        product_id = request.data.get("product_id")
+        if not product_id:
+            return Response(
+                data={"message": "Please provide product id"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            Product.objects.get(id=product_id).delete()
+            return Response(
+                data={
+                    "message": "Product deleted",
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Product.DoesNotExist:
+            return Response(
+                data={
+                    "message": "Product not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class ERPNextItemGroupsApi(ViewSet):
+    def sync_category(self, request):
+        validated_data = self.validate_category_object(request.data)
+        if not validated_data.get("category_object"):
+            return Response(
+                data={
+                    "message": validated_data.get("message"),
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        category = None
+        category_object: dict = validated_data.get("category_object")
+        if category_object.get("category_id"):
+            category = Category.objects.filter(
+                id=category_object.get("category_id")
+            ).update(**category_object)
+        else:
+            category = Category.objects.create(**category_object)
+        if category:
+            if category.name:
+                return Response(
+                    data={
+                        "message": "Category sync successfully!",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+        return Response(
+            data={
+                "message": "Internal server error",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    def validate_category_object(self, data: dict):
+        mandatory_fields = [
+            "name",
+            # "parent",
+            # "image"
+        ]
+        if not data.get("name"):
+            return {"message": "Please provide category name"}
+
+        category_object = {"name": data.get("name")}
+        if data.get("image"):
+            category_object["image"] = data.get("image")
+
+        if data.get("parent"):
+            try:
+                category_object["parent"] = Category.objects.get(id=data.get("parent"))
+            except Category.DoesNotExist:
+                return {"message": "Parent category not found"}
+
+        if data.get("category_id"):
+            category_object["category_id"] = data.get("category_id")
+        return {"message": "Validated", "category_object": category_object}

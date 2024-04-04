@@ -2,6 +2,7 @@ from apps.store.models.customer import Customer
 from apps.store.models.common import Category
 from apps.store.models import ModelMedia
 from django.conf import settings
+from apps.store.models.customer import Cart
 
 
 def get_customer(user):
@@ -9,6 +10,15 @@ def get_customer(user):
         return Customer.objects.get(user=user)
     except Customer.DoesNotExist:
         return False
+
+
+def get_customer_cart(customer):
+    if not customer:
+        raise ValueError("please p")
+    try:
+        return Cart.objects.get(customer=customer)
+    except Cart.DoesNotExist:
+        return Cart.objects.create(customer=customer)
 
 
 def get_category(category_id=None, category_name=None):

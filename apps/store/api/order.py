@@ -4,6 +4,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 import json
+import stripe
 from server.utils import exceute_sql_query
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
@@ -12,6 +13,13 @@ from apps.store.models.product import Product
 from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
 from apps.accounts.models import Address
+import math
+
+
+stripe.api_key = "sk_test_51O2D7TSHIJhZN3ua8TrAYk0UhmTqadkUMggqLR0u9nvofMMVhZdoWMMThEpjPE66cBDDTdNQfA2S0VAv96bzLRgx00oepL2K7G"
+endpoint_secret = (
+    "whsec_bdfea6b9811e6b303aee055ec6c13aa96a6fec3e2e42d2ca04b6ddb5e542eb78"
+)
 
 
 @permission_classes([IsAuthenticated])
@@ -42,10 +50,40 @@ class OrderApi(ViewSet):
             )
 
         order.save()
-        customer_cart.delete()
-        cart_items.delete()
+        order_items = OrderItems.objects.filter(order=order)
+        stripe_line_items = []
+        for oi in order_items:
+            stripe_line_items.append(
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "unit_amount": math.ceil(oi.amount * 100),
+                        "product_data": {
+                            "name": oi.item.product_name,
+                            "images": oi.item.get_product_images(request=request),
+                        },
+                    },
+                    "quantity": int(oi.qty),
+                }
+            )
 
-        return Response(status=200, data=order.id)
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=stripe_line_items,
+            metadata={"order_id": order.id},
+            mode="payment",
+            success_url="http://localhost:5173/",
+            cancel_url="http://localhost:5173/",
+            billing_address_collection="auto",
+        )
+
+        return Response(
+            {
+                "order_id": order.id,
+                "checkout_session": session.id,
+                "checkout_url": session.url,
+            }
+        )
 
     def get_customer_orders(self, request):
         customer = get_customer(request.user)
@@ -57,7 +95,11 @@ class OrderApi(ViewSet):
             except Exception:
                 filters = {}
 
-        orders_qs = Order.objects.filter(customer=customer).order_by("-creation")
+        orders_qs = (
+            Order.objects.filter(customer=customer)
+            .filter(payment_status=True)
+            .order_by("-creation")
+        )
 
         if filters.get("order_status"):
             orders_qs.filter(order_status=filters.get("order_status"))
@@ -93,23 +135,6 @@ class OrderApi(ViewSet):
                             "amount": oi.amount,
                         }
                     )
-
-                # order_items = exceute_sql_query(
-                #     f"""SELECT
-                #         p.product_name,
-                #         p.cover_image,
-                #         oi.rate,
-                #         oi.creation,
-                #         oi.qty,
-                #         oi.amount
-                #     FROM
-                #         store_orderitems oi
-                #         INNER JOIN store_product p ON oi.item_id = p.id
-                #     WHERE
-                #         oi.order_id = '{order.id}'
-                #     ORDER BY DATE(oi.creation) DESC
-                #     """
-                # )
 
                 order_dict["items"] = order_items
                 data.append(order_dict)
@@ -236,3 +261,46 @@ class CustomerFunctions(ViewSet):
             return Response(data={"reviews": data})
 
         return Response(data={"reviews": None})
+
+
+import json
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
+
+@csrf_exempt
+def order_payment_confirm_webhook(request):
+    payload = request.body
+    event = None
+    sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        if event.type == "checkout.session.completed":
+
+            order_id = event["data"]["object"]["metadata"]["order_id"]
+            print(f"{order_id}")
+            try:
+                order_queryset = Order.objects.get(id=order_id)
+                order_queryset.payment_status = True
+                order_queryset.save()
+            except Order.DoesNotExist:
+                ...
+
+        else:
+
+            print("Unhandled event type {}".format(event.type))
+            if event.type == "checkout.session.async_payment_failed":
+                order_id = event["data"]["object"]["metadata"]["order_id"]
+                try:
+                    order_queryset = Order.objects.get(id=order_id)
+                    order_queryset.delete()
+                except Order.DoesNotExist:
+                    ...
+
+            print("Unhandled event type {}".format(event.type))
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=400)
+
+    return HttpResponse(status=200)

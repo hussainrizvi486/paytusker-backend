@@ -1,17 +1,27 @@
 from django.urls import path
 from .api.product import ProductApi, ProductsApi, SearchProductsApi
 from .api.cart import CartApi
-from .api.order import OrderApi, CustomerFunctions
-from .erpnext.apis import ERPNextProductsApi
+from .api.order import OrderApi, CustomerFunctions, order_payment_confirm_webhook
+from .erpnext.apis import ERPNextProductsApi,ERPNextItemGroupsApi
 
 erpnext_api_urls = [
     path(
         "erpnext/product/sync",
         ERPNextProductsApi.as_view({"post": "sync_product"}),
     ),
+    path(
+        "erpnext/product/delete",
+        ERPNextProductsApi.as_view({"post": "remove_product"}),
+    ),
+    path(
+        "erpnext/category/sync",
+        ERPNextItemGroupsApi.as_view({"get": "sync_category"}),
+    ),
 ]
 
+
 urlpatterns = [
+    path("webhooks/payment/orders", order_payment_confirm_webhook),
     path(
         "product/details",
         ProductsApi.as_view({"get": "get_product_detail"}),
@@ -42,5 +52,6 @@ urlpatterns = [
     # old routes
     path("get-products", ProductApi.as_view()),
 ]
+
 
 urlpatterns.extend(erpnext_api_urls)
