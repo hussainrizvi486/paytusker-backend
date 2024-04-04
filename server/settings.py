@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -95,9 +96,9 @@ REST_FRAMEWORK = {
 }
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -179,3 +180,11 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+
+# Custom Variables
+load_dotenv()
+STRIPE_API_KEY = os.environ["STRIPE_API_KEY"]
+STRIPE_END_SECRECT_KEY = os.environ["STRIPE_END_SECRECT_KEY"]
+STRIPE_PAYMENT_SUCCESS_URL = os.environ["STRIPE_PAYMENT_SUCCESS_URL"]
+STRIPE_PAYMENT_FAILED_URL = os.environ["STRIPE_PAYMENT_FAILED_URL"]
