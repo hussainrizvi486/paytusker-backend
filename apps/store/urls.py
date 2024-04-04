@@ -15,7 +15,7 @@ erpnext_api_urls = [
     ),
     path(
         "erpnext/category/sync",
-        ERPNextItemGroupsApi.as_view({"get": "sync_category"}),
+        ERPNextItemGroupsApi.as_view({"post": "sync_category"}),
     ),
 ]
 

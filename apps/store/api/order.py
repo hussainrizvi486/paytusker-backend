@@ -14,12 +14,10 @@ from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
 from apps.accounts.models import Address
 import math
+from server import settings
 
-
-stripe.api_key = "sk_test_51O2D7TSHIJhZN3ua8TrAYk0UhmTqadkUMggqLR0u9nvofMMVhZdoWMMThEpjPE66cBDDTdNQfA2S0VAv96bzLRgx00oepL2K7G"
-endpoint_secret = (
-    "whsec_bdfea6b9811e6b303aee055ec6c13aa96a6fec3e2e42d2ca04b6ddb5e542eb78"
-)
+stripe.api_key = settings.STRIPE_API_KEY
+endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 
 
 @permission_classes([IsAuthenticated])
@@ -72,8 +70,8 @@ class OrderApi(ViewSet):
             line_items=stripe_line_items,
             metadata={"order_id": order.id},
             mode="payment",
-            success_url="http://localhost:5173/",
-            cancel_url="http://localhost:5173/",
+            success_url=settings.STRIPE_PAYMENT_SUCCESS_URL,
+            cancel_url=settings.STRIPE_PAYMENT_FAILED_URL,
             billing_address_collection="auto",
         )
 
@@ -284,6 +282,9 @@ def order_payment_confirm_webhook(request):
                 order_queryset = Order.objects.get(id=order_id)
                 order_queryset.payment_status = True
                 order_queryset.save()
+                cart = Cart.objects.filter(customer=order_queryset.customer).first()
+                if cart:
+                    CartItem.objects.filter(cart=cart).delete()
             except Order.DoesNotExist:
                 ...
 
