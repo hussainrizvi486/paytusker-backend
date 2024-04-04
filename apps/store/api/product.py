@@ -337,9 +337,7 @@ class SearchProductsApi(APIView):
         for attr in variant_queryset:
             serialized_variant_queryset.append(
                 {
-                    "attribute": (
-                        attr.attribute.attribute_name if attr.attribute else None
-                    ),
+                    "attribute": attr.attribute,
                     "attribute_value": attr.attribute_value,
                 }
             )
