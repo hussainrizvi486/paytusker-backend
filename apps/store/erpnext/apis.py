@@ -187,10 +187,11 @@ class ERPNextItemGroupsApi(ViewSet):
 
         category = None
         category_object: dict = validated_data.get("category_object")
-        if category_object.get("category_id"):
-            category = Category.objects.filter(
-                id=category_object.get("category_id")
-            ).update(**category_object)
+        category_id = validated_data.get("category_id")
+
+        if category_id:
+            Category.objects.filter(id=category_id).update(**category_object)
+            category = Category.objects.get(id=category_id)
         else:
             category = Category.objects.create(**category_object)
         if category:
@@ -198,6 +199,7 @@ class ERPNextItemGroupsApi(ViewSet):
                 return Response(
                     data={
                         "message": "Category sync successfully!",
+                        "category_id": category.id,
                     },
                     status=status.HTTP_200_OK,
                 )
@@ -227,6 +229,29 @@ class ERPNextItemGroupsApi(ViewSet):
             except Category.DoesNotExist:
                 return {"message": "Parent category not found"}
 
-        if data.get("category_id"):
-            category_object["category_id"] = data.get("category_id")
-        return {"message": "Validated", "category_object": category_object}
+        # if data.get("category_id"):
+        #     category_object["category_id"] = data.get("category_id")
+        return {
+            "message": "Validated",
+            "category_object": category_object,
+            "category_id": data.get("category_id"),
+        }
+
+    def remove_category(self, request):
+        data: dict = request.data
+        if not data.get("category_id"):
+            try:
+                Category.objects.get(id=data.get("category_id")).delete()
+                return Response(
+                    data={"message": "No category found"},
+                    status=status.HTTP_200_OK,
+                )
+            except Category.DoesNotExist:
+                return Response(
+                    data={"message": "No category found"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        return Response(
+            data={"message": "please provide category id"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
