@@ -95,10 +95,15 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
 }
 
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "paytusker_primary_db",
+        "USER": "paytusker",
+        "PASSWORD": "zx10dvfpkc",
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
