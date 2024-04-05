@@ -272,12 +272,12 @@ def order_payment_confirm_webhook(request):
     event = None
     sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
 
+    print(f"sig_header {sig_header},\n endpoint_secret {endpoint_secret}")
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         if event.type == "checkout.session.completed":
 
             order_id = event["data"]["object"]["metadata"]["order_id"]
-            print(f"{order_id}")
             try:
                 order_queryset = Order.objects.get(id=order_id)
                 order_queryset.payment_status = True
@@ -289,7 +289,6 @@ def order_payment_confirm_webhook(request):
                 ...
 
         else:
-
             print("Unhandled event type {}".format(event.type))
             if event.type == "checkout.session.async_payment_failed":
                 order_id = event["data"]["object"]["metadata"]["order_id"]
