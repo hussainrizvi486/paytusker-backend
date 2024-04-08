@@ -270,18 +270,18 @@ from django.views.decorators.csrf import csrf_exempt
 def order_payment_confirm_webhook(request):
     payload = request.body
     event = None
-    sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+    sig_header = request.META["STRIPE_SIGNATURE"]
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        print(f"{endpoint_secret}")
         if event.type == "checkout.session.completed":
 
             order_id = event["data"]["object"]["metadata"]["order_id"]
-            print(f"{order_id}")
             try:
                 order_queryset = Order.objects.get(id=order_id)
                 order_queryset.payment_status = True
-                order_queryset.save()
+                order_queryset.save()   
                 cart = Cart.objects.filter(customer=order_queryset.customer).first()
                 if cart:
                     CartItem.objects.filter(cart=cart).delete()
@@ -291,6 +291,7 @@ def order_payment_confirm_webhook(request):
         else:
 
             print("Unhandled event type {}".format(event.type))
+            
             if event.type == "checkout.session.async_payment_failed":
                 order_id = event["data"]["object"]["metadata"]["order_id"]
                 try:
@@ -301,6 +302,7 @@ def order_payment_confirm_webhook(request):
 
             print("Unhandled event type {}".format(event.type))
     except Exception as e:
+        
         print(e)
         return HttpResponse(status=400)
 

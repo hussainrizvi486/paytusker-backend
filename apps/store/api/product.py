@@ -301,6 +301,22 @@ class SearchProductsApi(APIView):
             )
 
             if products_queryset:
+                filters_attributes = self.get_search_product_attributes(
+                    products_queryset
+                )
+                attributes_filter: dict = filters.get("attributes")
+                if attributes_filter:
+                    for key, values in attributes_filter.items():
+                        products_queryset = products_queryset.filter(
+                            productvariantattribute__attribute=key,
+                            productvariantattribute__attribute_value__in=values,
+                        )
+                # if filters.get("attributes"):
+                print(filters.get("attributes"))
+                {"Color": ["Blue", "Orange"]}
+
+                products_queryset.filter()
+
                 if filters.get("category_id"):
                     category = Category.objects.get(id=filters.get("category_id"))
                     products_queryset = products_queryset.filter(category=category)
@@ -314,9 +330,7 @@ class SearchProductsApi(APIView):
                     products_queryset = products_queryset.filter(
                         price__lte=Decimal(filters.get("max_price"))
                     )
-                filters_attributes = self.get_search_product_attributes(
-                    products_queryset
-                )
+
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(
                     products_res, many=True, context={"request": request}

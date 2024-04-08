@@ -54,7 +54,6 @@ class ERPNextProductsApi(ViewSet):
                 ProductVariantAttribute.objects.filter(product=product).delete()
                 if variants_object:
                     for object in variants_object:
-                        print(object)
                         ProductVariantAttribute.objects.create(
                             product=product,
                             attribute=object.get("attribute"),
@@ -185,37 +184,46 @@ class ERPNextItemGroupsApi(ViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        category = None
-        category_object: dict = validated_data.get("category_object")
+        category_object = validated_data.get("category_object")
         category_id = validated_data.get("category_id")
 
         if category_id:
-            Category.objects.filter(id=category_id).update(**category_object)
-            category = Category.objects.get(id=category_id)
-        else:
-            category = Category.objects.create(**category_object)
-        if category:
-            if category.name:
+            try:
+                category = Category.objects.get(id=category_id)
+                for key, value in category_object.items():
+                    setattr(category, key, value)  # Update category object attributes
+
+                if not category_object.get(
+                    "image"
+                ):  # Check if "image" is empty or not provided
+                    category.image.delete()
+                category.save()
+            except Category.DoesNotExist:
                 return Response(
                     data={
-                        "message": "Category sync successfully!",
-                        "category_id": category.id,
+                        "message": "No category found with this id",
+                        "category_id": category_id,
                     },
-                    status=status.HTTP_200_OK,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
+        else:
+            category = Category.objects.create(**category_object)
+
+        if category:
+            return Response(
+                data={
+                    "message": "Category synced successfully!",
+                    "category_id": category.id,
+                },
+                status=status.HTTP_200_OK,
+            )
+
         return Response(
-            data={
-                "message": "Internal server error",
-            },
-            status=status.HTTP_403_FORBIDDEN,
+            data={"message": "Internal server error"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     def validate_category_object(self, data: dict):
-        mandatory_fields = [
-            "name",
-            # "parent",
-            # "image"
-        ]
         if not data.get("name"):
             return {"message": "Please provide category name"}
 
@@ -228,9 +236,9 @@ class ERPNextItemGroupsApi(ViewSet):
                 category_object["parent"] = Category.objects.get(id=data.get("parent"))
             except Category.DoesNotExist:
                 return {"message": "Parent category not found"}
+        else:
+            category_object["parent"] = None
 
-        # if data.get("category_id"):
-        #     category_object["category_id"] = data.get("category_id")
         return {
             "message": "Validated",
             "category_object": category_object,
@@ -238,20 +246,22 @@ class ERPNextItemGroupsApi(ViewSet):
         }
 
     def remove_category(self, request):
-        data: dict = request.data
-        if not data.get("category_id"):
+        category_id = request.data.get("category_id")
+        if category_id:
             try:
-                Category.objects.get(id=data.get("category_id")).delete()
+                category = Category.objects.get(id=category_id)
+                category.delete()
                 return Response(
-                    data={"message": "No category found"},
+                    data={"message": "Category removed successfully"},
                     status=status.HTTP_200_OK,
                 )
             except Category.DoesNotExist:
                 return Response(
-                    data={"message": "No category found"},
-                    status=status.HTTP_403_FORBIDDEN,
+                    data={"message": "No category found with this id"},
+                    status=status.HTTP_404_NOT_FOUND,
                 )
-        return Response(
-            data={"message": "please provide category id"},
-            status=status.HTTP_403_FORBIDDEN,
-        )
+        else:
+            return Response(
+                data={"message": "Please provide category id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
