@@ -128,9 +128,11 @@ class ERPNextProductsApi(ViewSet):
             "stock": data.get("stock"),
             "category": get_category(data.get("category_id")),
             "item_type": data.get("item_type"),
-            "template": Product.objects.get(id=data.get("template_id")),
         }
-
+        
+        if data.get("product_id") and data.get("item_type") == "003":
+            product_object["template"] = Product.objects.get(id=data.get("template_id"))
+            
         variants_object = data.get("variant_attributes")
 
         product_media_object = {
