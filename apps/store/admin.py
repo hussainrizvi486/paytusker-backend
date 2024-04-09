@@ -35,7 +35,14 @@ class ProductAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductAdmin)
 # admin.site.register(ProductAttribute)
 admin.site.register(Discount)
-admin.site.register(Category)
+# admin.site.register(Category)
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ["name", "id"]
+
+
+admin.site.register(Category, CategoryAdmin)
 
 
 class OrderAdmin(admin.ModelAdmin):
