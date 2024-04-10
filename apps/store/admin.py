@@ -10,7 +10,7 @@ from apps.store.models.product import (
 from apps.store.models.common import Discount, Category
 from apps.store.models.customer import Customer, Cart, CartItem
 from apps.store.models.order import Order, OrderItems, OrderReview
-from apps.store.models.erp import *
+# from apps.store.models.erp import *
 
 
 class ProductImageInline(admin.TabularInline):
@@ -57,4 +57,4 @@ admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(OrderReview)
 admin.site.register(ModelMedia)
-admin.site.register(PaymentEntry)
+# admin.site.register(PaymentEntry)
