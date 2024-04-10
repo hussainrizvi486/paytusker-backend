@@ -13,6 +13,8 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -96,15 +98,14 @@ REST_FRAMEWORK = {
 }
 
 
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "paytusker_primary_db",
-        "USER": "paytusker",
-        "PASSWORD": "zx10dvfpkc",
-        "HOST": "localhost",
-        "PORT": "",
+        "ENGINE": os.environ["DB_ENGINE"],
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": os.environ["DB_PORT"],
     }
 }
 
@@ -189,7 +190,6 @@ SIMPLE_JWT = {
 
 
 # Custom Variables
-load_dotenv()
 STRIPE_API_KEY = os.environ["STRIPE_API_KEY"]
 STRIPE_END_SECRECT_KEY = os.environ["STRIPE_END_SECRECT_KEY"]
 STRIPE_PAYMENT_SUCCESS_URL = os.environ["STRIPE_PAYMENT_SUCCESS_URL"]
