@@ -3,13 +3,6 @@ from .base import BaseModel
 from .common import Category
 
 
-PRODUCT_TYPES = {
-    ("001", "Normal"),
-    ("002", "Template"),
-    ("003", "Varient"),
-}
-
-
 class ProductManager(models.Manager):
     def get_queryset(self) -> models.QuerySet:
         return super().get_queryset().filter(disabled=False)
@@ -30,7 +23,15 @@ class Product(BaseModel):
     cover_image = models.ImageField(max_length=10000, null=True)
     rating = models.IntegerField(null=True, blank=True, default=0)
     item_type = models.CharField(
-        max_length=999, choices=PRODUCT_TYPES, default="001", null=True, blank=True
+        max_length=999,
+        choices=(
+            ("001", "Normal"),
+            ("002", "Template"),
+            ("003", "Varient"),
+        ),
+        default="001",
+        null=True,
+        blank=True,
     )
     template = models.ForeignKey(
         "self", on_delete=models.CASCADE, null=True, blank=True

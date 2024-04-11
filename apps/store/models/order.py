@@ -6,21 +6,6 @@ from uuid import uuid4
 from server.utils import generate_snf_id
 from apps.accounts.models import Address
 
-ORDER_STATUS = {
-    ("001", "Order Pending"),
-    ("002", "Order Confirmed"),
-    ("003", "In Process"),
-    ("004", "Shipping"),
-    ("005", "Delivered"),
-}
-
-PAYMENT_METHOD = [
-    ("001", "Cash On Delivery"),
-    ("002", "Stripe"),
-    ("003", "PayPal"),
-    ("004", "Crypto"),
-]
-
 
 class Order(BaseModel):
     order_id = models.CharField(
@@ -30,12 +15,29 @@ class Order(BaseModel):
     order_date = models.DateField(auto_now_add=True)
     delivery_date = models.DateField(auto_now_add=True)
     order_status = models.CharField(
-        choices=ORDER_STATUS, null=True, blank=True, max_length=999
+        choices=(
+            ("001", "Order Pending"),
+            ("002", "Order Confirmed"),
+            ("003", "In Process"),
+            ("004", "Shipping"),
+            ("005", "Delivered"),
+        ),
+        null=True,
+        blank=True,
+        max_length=999,
     )
     delivery_status = models.BooleanField(default=False)
     payment_status = models.BooleanField(default=False)
     payment_method = models.CharField(
-        choices=PAYMENT_METHOD, null=True, blank=True, max_length=999
+        choices=(
+            ("001", "Cash On Delivery"),
+            ("002", "Stripe"),
+            ("003", "PayPal"),
+            ("004", "Crypto"),
+        ),
+        null=True,
+        blank=True,
+        max_length=999,
     )
     total_qty = models.DecimalField(
         default=1, decimal_places=2, max_digits=12, blank=True
@@ -89,5 +91,3 @@ class OrderReview(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.customer.customer_name}-{self.order.order_id}"
-
-
