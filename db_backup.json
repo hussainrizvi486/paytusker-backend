@@ -1,0 +1,167 @@
+[
+    {
+        "model": "store.productvariantattribute",
+        "pk": "09ee5cd3-58b1-4762-8f2a-cf4330a88ed3",
+        "fields": {
+            "creation": "2024-04-06T22:22:25.207Z",
+            "modified": "2024-04-06T22:22:25.207Z",
+            "product": "ef6f0510-4cfe-4c3d-85ff-41f86d074fe0",
+            "attribute": "Style",
+            "attribute_value": "With Out Book"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "244d72e9-776f-4f0d-91b9-e7aa27042b1d",
+        "fields": {
+            "creation": "2024-04-06T22:28:51.657Z",
+            "modified": "2024-04-06T22:28:51.657Z",
+            "product": "3aba94a0-7fab-4916-a9ea-69740b2ec754",
+            "attribute": "Style",
+            "attribute_value": "With Book"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "29c138ea-e5b5-4cdc-b975-c94615eaa468",
+        "fields": {
+            "creation": "2024-03-27T19:48:06.779Z",
+            "modified": "2024-04-01T22:01:31.700Z",
+            "product": "3ca63edb-5685-4b41-9e7d-477309b40291",
+            "attribute": "Color",
+            "attribute_value": "White"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "427fdb57-6a83-4732-a9b9-bec40aaa679e",
+        "fields": {
+            "creation": "2024-04-02T17:15:26.121Z",
+            "modified": "2024-04-02T17:15:26.121Z",
+            "product": "5758e7ad-de23-426a-8424-3a8af1ddcc66",
+            "attribute": "Style",
+            "attribute_value": "Wired"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "684552a6-9ebe-42ce-935b-bbe5108166b8",
+        "fields": {
+            "creation": "2024-03-27T19:51:32.232Z",
+            "modified": "2024-04-01T22:01:23.325Z",
+            "product": "7d50fd86-0f8f-4c00-bf2e-b037d7bd7673",
+            "attribute": "Color",
+            "attribute_value": "Teal"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "7f0f7227-4e4f-4044-9d07-734f50462722",
+        "fields": {
+            "creation": "2024-04-02T17:15:26.119Z",
+            "modified": "2024-04-02T17:15:26.119Z",
+            "product": "5758e7ad-de23-426a-8424-3a8af1ddcc66",
+            "attribute": "Color",
+            "attribute_value": "Pink"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "9bcc260c-6616-4db2-9366-d047742b46ad",
+        "fields": {
+            "creation": "2024-04-02T17:09:18.149Z",
+            "modified": "2024-04-02T17:09:18.149Z",
+            "product": "4d9b63fd-af67-493d-8c16-06e8c33206e1",
+            "attribute": "Color",
+            "attribute_value": "Pink"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "a4d1465c-d6a0-4a4b-bd08-bbe6ff2ef05c",
+        "fields": {
+            "creation": "2024-04-02T17:07:43.367Z",
+            "modified": "2024-04-02T17:07:43.367Z",
+            "product": "9628760a-a683-4ac4-bd49-7cd310f02d47",
+            "attribute": "Color",
+            "attribute_value": "Pink"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "a589efad-0da6-44de-a7d9-1ba823951aeb",
+        "fields": {
+            "creation": "2024-03-22T09:08:26.515Z",
+            "modified": "2024-04-01T22:01:41.436Z",
+            "product": "34f83285-2500-4e6d-b17b-e2a0e0dbc59a",
+            "attribute": "Color",
+            "attribute_value": "Green"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "bbad0893-ce9f-49e5-a7a7-81aef3caba5e",
+        "fields": {
+            "creation": "2024-04-02T17:07:43.370Z",
+            "modified": "2024-04-02T17:07:43.371Z",
+            "product": "9628760a-a683-4ac4-bd49-7cd310f02d47",
+            "attribute": "Style",
+            "attribute_value": "Wired"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "c7693fb5-6a8d-4be9-bfeb-030e6d841ad3",
+        "fields": {
+            "creation": "2024-04-06T22:22:25.205Z",
+            "modified": "2024-04-06T22:22:25.205Z",
+            "product": "ef6f0510-4cfe-4c3d-85ff-41f86d074fe0",
+            "attribute": "Color",
+            "attribute_value": "Butterscotch"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "d71b0a86-77de-4990-873d-782257fa3130",
+        "fields": {
+            "creation": "2024-03-27T19:54:15.159Z",
+            "modified": "2024-04-01T22:01:16.596Z",
+            "product": "b98fa4cf-fa0d-40af-93ee-eefa498d7b20",
+            "attribute": "Color",
+            "attribute_value": "Orange"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "f25c2dff-6454-4b82-864e-a9baf520aaeb",
+        "fields": {
+            "creation": "2024-04-02T17:09:18.155Z",
+            "modified": "2024-04-02T17:09:18.155Z",
+            "product": "4d9b63fd-af67-493d-8c16-06e8c33206e1",
+            "attribute": "Style",
+            "attribute_value": "Wired"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "f849bcc7-5303-471b-8033-84470d5ddf0c",
+        "fields": {
+            "creation": "2024-03-22T09:08:37.108Z",
+            "modified": "2024-04-01T22:01:50.234Z",
+            "product": "e8ce9496-46e7-49e0-9e56-c9e2d7c1fbeb",
+            "attribute": "Color",
+            "attribute_value": "Green"
+        }
+    },
+    {
+        "model": "store.productvariantattribute",
+        "pk": "ffec204e-c651-4d2a-bdef-92b63d6a41ed",
+        "fields": {
+            "creation": "2024-04-06T22:28:51.655Z",
+            "modified": "2024-04-06T22:28:51.655Z",
+            "product": "3aba94a0-7fab-4916-a9ea-69740b2ec754",
+            "attribute": "Color",
+            "attribute_value": "Orange"
+        }
+    }
+]

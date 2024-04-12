@@ -129,10 +129,10 @@ class ERPNextProductsApi(ViewSet):
             "category": get_category(data.get("category_id")),
             "item_type": data.get("item_type"),
         }
-        
+
         if data.get("product_id") and data.get("item_type") == "003":
             product_object["template"] = Product.objects.get(id=data.get("template_id"))
-            
+
         variants_object = data.get("variant_attributes")
 
         product_media_object = {
@@ -159,7 +159,14 @@ class ERPNextProductsApi(ViewSet):
             )
 
         try:
-            Product.objects.get(id=product_id).delete()
+            product = Product.objects.get(id=product_id)
+            if product.item_type == "002":
+                products_variant = Product.objects.filter(template=product)
+                if products_variant:
+                    products_variant.delete()
+
+            product.delete()
+
             return Response(
                 data={
                     "message": "Product deleted",
@@ -178,11 +185,10 @@ class ERPNextProductsApi(ViewSet):
 class ERPNextItemGroupsApi(ViewSet):
     def sync_category(self, request):
         validated_data = self.validate_category_object(request.data)
+
         if not validated_data.get("category_object"):
             return Response(
-                data={
-                    "message": validated_data.get("message"),
-                },
+                data={"message": validated_data.get("message")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -193,11 +199,9 @@ class ERPNextItemGroupsApi(ViewSet):
             try:
                 category = Category.objects.get(id=category_id)
                 for key, value in category_object.items():
-                    setattr(category, key, value)  # Update category object attributes
+                    setattr(category, key, value)
 
-                if not category_object.get(
-                    "image"
-                ):  # Check if "image" is empty or not provided
+                if not category_object.get("image"):
                     category.image.delete()
                 category.save()
             except Category.DoesNotExist:
@@ -259,7 +263,7 @@ class ERPNextItemGroupsApi(ViewSet):
                 )
             except Category.DoesNotExist:
                 return Response(
-                    data={"message": "No category found with this id"},
+                    data={"message": "No category found with this id"}, 
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:

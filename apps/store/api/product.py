@@ -279,13 +279,17 @@ class ProductApi(APIView):
 class SearchProductsApi(APIView):
     def get(self, request):
         query = request.GET.get("query")
-        pagniator = ProductsListPagination()
+        category_id = request.GET.get("category")
         filters = {}
+
         if request.GET.get("filters"):
             try:
                 filters = json.loads(request.GET.get("filters"))
-            except Exception:
+            except json.JSONDecodeError:
                 filters = {}
+
+        products_queryset = None
+        pagniator = ProductsListPagination()
 
         if query:
             query = str(query).strip()
@@ -300,47 +304,49 @@ class SearchProductsApi(APIView):
                 .order_by("-rank")
             )
 
-            if products_queryset:
-                filters_attributes = self.get_search_product_attributes(
-                    products_queryset
-                )
-                attributes_filter: dict = filters.get("attributes")
-                if attributes_filter:
-                    for key, values in attributes_filter.items():
+        elif category_id:
+            products_queryset = Product.objects.filter(
+                category__id=category_id
+            ).exclude(item_type="002")
+
+        if products_queryset:
+            filters_attributes = self.get_search_product_attributes(products_queryset)
+            attributes_filter: dict = filters.get("attributes")
+            if attributes_filter:
+                for key, values in attributes_filter.items():
+                    if key and values:
                         products_queryset = products_queryset.filter(
                             productvariantattribute__attribute=key,
                             productvariantattribute__attribute_value__in=values,
                         )
-                # if filters.get("attributes"):
-                print(filters.get("attributes"))
-                {"Color": ["Blue", "Orange"]}
 
-                products_queryset.filter()
+            if filters.get("category_id"):
+                category = Category.objects.get(id=filters.get("category_id"))
+                products_queryset = products_queryset.filter(category=category)
 
-                if filters.get("category_id"):
-                    category = Category.objects.get(id=filters.get("category_id"))
-                    products_queryset = products_queryset.filter(category=category)
+            if filters.get("min_price"):
+                products_queryset = products_queryset.filter(
+                    price__gte=Decimal(filters.get("min_price"))
+                )
 
-                if filters.get("min_price"):
-                    products_queryset = products_queryset.filter(
-                        price__gte=Decimal(filters.get("min_price"))
-                    )
+            if filters.get("max_price"):
+                products_queryset = products_queryset.filter(
+                    price__lte=Decimal(filters.get("max_price"))
+                )
 
-                if filters.get("max_price"):
-                    products_queryset = products_queryset.filter(
-                        price__lte=Decimal(filters.get("max_price"))
-                    )
-
+            if products_queryset:
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(
                     products_res, many=True, context={"request": request}
                 )
+
                 return pagniator.get_paginated_response(
                     products_data.data, {"filters_attributes": filters_attributes}
                 )
 
             return Response(data={"results": [], "message": "No items Found"})
-        return Response(data="Please enter a query")
+
+        return Response(data="Please enter a query or category id")
 
     def get_search_product_attributes(self, products_queryset):
         variant_queryset = ProductVariantAttribute.objects.filter(
@@ -363,3 +369,20 @@ class SearchProductsApi(APIView):
                 attribute_object[dict.get("attribute")] = {dict.get("attribute_value")}
 
         return attribute_object
+
+
+class ProductCategory(ViewSet):
+    def get_categories(self, request):
+        category_queryset = Category.objects.all()
+        serialized_data = [
+            {
+                "name": row.name,
+                "image": (
+                    request.build_absolute_uri(row.image.url) if row.image else None
+                ),
+                "id": row.id,
+            }
+            for row in category_queryset
+        ]
+
+        return Response(data={"data": serialized_data})

@@ -29,7 +29,7 @@ def get_category(category_id=None, category_name=None):
     return None
 
 
-def get_serialized_model_media(model_name, id, request):
+def get_serialized_model_media(model_name, id, request=None):
     media_query_set = ModelMedia.objects.filter(model_name=model_name, field_id=id)
     media_data = []
     if media_query_set:
@@ -39,5 +39,8 @@ def get_serialized_model_media(model_name, id, request):
     return media_data
 
 
-def get_full_file_url(file_url, request):
-    return request.build_absolute_uri(file_url)
+def get_full_file_url(file_url, request=None):
+    if request:
+        return request.build_absolute_uri(file_url)
+    else:
+        return file_url
