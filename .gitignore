@@ -11,3 +11,4 @@ ENV/
 .pytype/
 folders.md
 /media
+db_backup.json
