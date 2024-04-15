@@ -10,9 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='PaymentEntry',
-        ),
         migrations.AlterField(
             model_name='order',
             name='order_status',
