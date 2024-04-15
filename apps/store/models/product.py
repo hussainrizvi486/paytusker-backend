@@ -13,7 +13,7 @@ class Product(BaseModel):
     net_price = models.DecimalField(
         decimal_places=2, max_digits=12, null=True, blank=True
     )
-    price = models.DecimalField(decimal_places=2, max_digits=12, null=True)
+    price = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     description = models.TextField(default="", null=True)
     stock = models.IntegerField(default=1)
     disabled = models.BooleanField(default=False, null=True)
@@ -36,7 +36,7 @@ class Product(BaseModel):
     template = models.ForeignKey(
         "self", on_delete=models.CASCADE, null=True, blank=True
     )
-
+    is_digital = models.BooleanField(default=False, null=True)
     objects = ProductManager()
 
     def __str__(self) -> str:
@@ -69,7 +69,6 @@ class ProductMedia(BaseModel):
 
     def __str__(self) -> str:
         return self.product.product_name
-
 
 
 class ProductVariantAttribute(BaseModel):

@@ -14,7 +14,7 @@ from apps.store.models.product import (
     Category,
     ProductVariantAttribute,
 )
-from apps.store.utils import get_category
+from apps.store.utils import get_category, get_serialized_model_media
 from server.utils import format_currency
 
 
@@ -41,7 +41,6 @@ class ProductsListPagination(PageNumberPagination):
 
 class ProductsApi(ViewSet):
     # Product API Methods
-
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
 
@@ -74,8 +73,9 @@ class ProductsApi(ViewSet):
         if product.item_type == "003":
             if product.template:
                 product_data_object["product_template"] = product.template.id
-                product_varients = self.get_product_variants(product.template)
-                product_data_object["product_varients"] = product_varients
+                product_data_object["product_varients"] = self.get_product_variants(
+                    product.template
+                )
 
             variants_attributes = self.get_variant_attributes(product)
             product_data_object["variants_attributes"] = variants_attributes
@@ -225,6 +225,9 @@ class ProductsApi(ViewSet):
                     "rating": obj.rating or 0,
                     "customer_name": obj.customer.customer_name,
                     "created_on": obj.creation.strftime("%d-%m-%Y"),
+                    "images": get_serialized_model_media(
+                        "OrderReview", obj.id, self.request
+                    ),
                 }
             )
 

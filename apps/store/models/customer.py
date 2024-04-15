@@ -5,6 +5,7 @@ from .base import BaseModel
 from .product import Product
 from apps.accounts.models import User
 
+
 class Customer(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     customer_name = models.CharField(max_length=999)
@@ -19,7 +20,7 @@ class Cart(BaseModel):
         decimal_places=2, max_digits=12, null=True, default=0
     )
     total_amount = models.DecimalField(
-        decimal_places=2, max_digits=12, null=True, default=0
+        decimal_places=2, max_digits=12, null=True, blank=True
     )
 
     def __str__(self) -> str:

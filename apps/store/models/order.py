@@ -1,8 +1,9 @@
 from django.db import models
+from django.db.models import Avg
+
 from .base import BaseModel
 from .product import Product
 from .customer import Customer
-from uuid import uuid4
 from server.utils import generate_snf_id
 from apps.accounts.models import Address
 
@@ -45,6 +46,7 @@ class Order(BaseModel):
     grand_total = models.DecimalField(
         decimal_places=2, max_digits=12, null=True, blank=True
     )
+
     delivery_address = models.ForeignKey(
         Address, null=True, blank=True, on_delete=models.SET_NULL
     )
@@ -91,3 +93,21 @@ class OrderReview(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.customer.customer_name}-{self.order.order_id}"
+
+    def save(self, *args, **kwargs):
+        total_rating = OrderReview.objects.filter(product=self.product).aggregate(
+            Avg("rating", default=0)
+        )
+        self.product.rating = total_rating.get("rating__avg") or 0
+        self.product.save()
+        return super().save(*args, **kwargs)
+
+
+class CustomersOrdersHistory(models.Model):
+    customer = models.CharField(max_length=999)
+    order_id = models.CharField(max_length=999)
+    total_amount = models.CharField(max_length=999)
+    total_qty = models.CharField(max_length=999)
+    payment_method = models.CharField(max_length=999)
+    delivery_status = models.CharField(max_length=999)
+    delivery_address = models.CharField(max_length=999)

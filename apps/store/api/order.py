@@ -1,11 +1,11 @@
+import json
+import stripe
+import math
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-import json
-import stripe
-from server.utils import exceute_sql_query
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart
@@ -13,7 +13,6 @@ from apps.store.models.product import Product
 from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
 from apps.accounts.models import Address
-import math
 from server import settings
 
 stripe.api_key = settings.STRIPE_API_KEY
@@ -27,10 +26,17 @@ class OrderApi(ViewSet):
         customer = get_customer(user=request.user)
         if not customer:
             return Response(data="User is not a customer")
-
         delivery_address = Address.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
         cart_items = CartItem.objects.all().filter(cart=customer_cart)
+
+        if not self.validate_customer_origin(delivery_address, cart_items):
+            return Response(
+                data={
+                    "message": "Only customers based in the United States can purchase physical products or enter a valid US address."
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
 
         order = Order.objects.create(
             customer=customer,
@@ -65,7 +71,7 @@ class OrderApi(ViewSet):
                 }
             )
 
-        session = stripe.checkout.Session.create(
+        checkout_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=stripe_line_items,
             metadata={"order_id": order.id},
@@ -78,10 +84,22 @@ class OrderApi(ViewSet):
         return Response(
             {
                 "order_id": order.id,
-                "checkout_session": session.id,
-                "checkout_url": session.url,
+                "checkout_session": checkout_session.id,
+                "checkout_url": checkout_session.url,
             }
         )
+
+    def validate_customer_origin(self, address_object, cart_items):
+        exists = False
+        for item in cart_items:
+            if not item.item.is_digital:
+                exists = True
+                break
+
+        if exists and address_object.country != "United States":
+            return False
+        else:
+            return True
 
     def get_customer_orders(self, request):
         customer = get_customer(request.user)
