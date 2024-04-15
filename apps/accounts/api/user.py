@@ -37,7 +37,6 @@ class UserApi(ViewSet):
             serailized_data = UserAddressSerializer(address_query_set, many=True)
             if serailized_data.data:
                 return Response(data=serailized_data.data)
-
             return Response(data=[])
 
     def add_user_address(self, request):

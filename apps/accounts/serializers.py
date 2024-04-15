@@ -37,5 +37,4 @@ class UserAddressSerializer(serializers.ModelSerializer):
         ]
 
     def get_address_display(self, obj):
-        return  f"""{obj.address_line_1 or ""}, {obj.city or ""}, {obj.state or ""}, {obj.country or ""}"""
-        
+        return f""" <b> {obj.address_title}</b>: {obj.address_line_1 or ""}, {obj.city or ""}, {obj.state or ""}, {obj.country or ""}"""
