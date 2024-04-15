@@ -1,14 +1,26 @@
+# Ignore Python byte code cache
 __pycache__/
+
+# Ignore log files
 *.log
+
+# Ignore SQLite database files
 db.sqlite3
 db.sqlite3-journal
+
+# Ignore environment files
 .env
-.venv
 env/
-staticfiles/
-venv/
-ENV/
+
+# Ignore static files directories
+static/
+/media/
+
+# Ignore backup files
+/db_backups
+
+# Ignore PyType cache
 .pytype/
+
+# Ignore miscellaneous files
 folders.md
-/media
-db_backup.json

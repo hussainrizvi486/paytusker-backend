@@ -118,23 +118,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='PaymentEntry',
-            fields=[
-                ('id', models.CharField(default=uuid.uuid4, editable=False, max_length=10000, primary_key=True, serialize=False, unique=True)),
-                ('creation', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('party', models.CharField(max_length=999)),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=12)),
-                ('reference', models.CharField(max_length=200)),
-                ('reference_id', models.CharField(max_length=200)),
-                ('currency', models.CharField(max_length=200)),
-                ('is_paid', models.BooleanField(default=False)),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.CreateModel(
             name='Product',
             fields=[
                 ('id', models.CharField(default=uuid.uuid4, editable=False, max_length=10000, primary_key=True, serialize=False, unique=True)),
