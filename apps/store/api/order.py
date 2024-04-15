@@ -19,13 +19,29 @@ stripe.api_key = settings.STRIPE_API_KEY
 endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([IsCustomerUser])
 class OrderApi(ViewSet):
     def create_order(self, request):
+        available_payment_methods = [
+            "card",
+            "klarna",
+        ]
+
         data = request.data
         customer = get_customer(user=request.user)
+        payment_method = data.get("payment_method")
+
         if not customer:
-            return Response(data="User is not a customer")
+            return Response(
+                data="User is not a customer", status=status.HTTP_403_FORBIDDEN
+            )
+
+        if payment_method not in available_payment_methods:
+            return Response(
+                data="Please select valid payment method",
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         delivery_address = Address.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
         cart_items = CartItem.objects.all().filter(cart=customer_cart)
@@ -41,7 +57,7 @@ class OrderApi(ViewSet):
         order = Order.objects.create(
             customer=customer,
             order_status="001",
-            payment_method=str(data.get("payment_method")),
+            payment_method=payment_method,
             payment_status=False,
             delivery_address=delivery_address,
         )
@@ -61,7 +77,7 @@ class OrderApi(ViewSet):
                 {
                     "price_data": {
                         "currency": "usd",
-                        "unit_amount": math.ceil(oi.amount * 100),
+                        "unit_amount": math.ceil(oi.rate * 100),
                         "product_data": {
                             "name": oi.item.product_name,
                             "images": oi.item.get_product_images(request=request),
@@ -72,7 +88,7 @@ class OrderApi(ViewSet):
             )
 
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
+            payment_method_types=[payment_method],
             line_items=stripe_line_items,
             metadata={"order_id": order.id},
             mode="payment",

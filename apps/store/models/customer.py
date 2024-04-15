@@ -1,6 +1,7 @@
 from django.db import models
+
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from .base import BaseModel
 from .product import Product
 from apps.accounts.models import User
@@ -50,6 +51,6 @@ class CartItem(BaseModel):
         return super().save(*args, **kwargs)
 
 
-@receiver(post_save, sender=CartItem)
-def update_cart(sender, instance, created, *args, **kwargs):
+@receiver([post_save, post_delete], sender=CartItem)
+def update_cart(sender, instance, created=None, *args, **kwargs):
     instance.cart.save()

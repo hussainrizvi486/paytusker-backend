@@ -30,12 +30,6 @@ class Order(BaseModel):
     delivery_status = models.BooleanField(default=False)
     payment_status = models.BooleanField(default=False)
     payment_method = models.CharField(
-        choices=(
-            ("001", "Cash On Delivery"),
-            ("002", "Stripe"),
-            ("003", "PayPal"),
-            ("004", "Crypto"),
-        ),
         null=True,
         blank=True,
         max_length=999,
