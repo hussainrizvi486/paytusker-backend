@@ -317,9 +317,7 @@ def order_payment_confirm_webhook(request):
                     order_queryset = Order.objects.get(id=order_id)
                     order_queryset.payment_status = True
                     order_queryset.save()
-                    cart = Cart.objects.filter(customer=order_queryset.customer).first()
-                    if cart:
-                        CartItem.objects.filter(cart=cart).delete()
+                    Cart.objects.filter(customer=order_queryset.customer).delete()
                 except Order.DoesNotExist:
                     ...
 
