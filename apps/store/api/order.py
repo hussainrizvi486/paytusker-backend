@@ -80,7 +80,7 @@ class OrderApi(ViewSet):
                         "unit_amount": math.ceil(oi.rate * 100),
                         "product_data": {
                             "name": oi.item.product_name,
-                            "images": oi.item.get_product_images(request=request),
+                            "images": request.build_absolute_uri(oi.item.cover_image),
                         },
                     },
                     "quantity": int(oi.qty),
@@ -185,7 +185,6 @@ class CustomerFunctions(ViewSet):
         ).exists():
 
             return "Review already exists", False
-
         return "", True
 
     def add_order_review(self, request):
@@ -227,7 +226,7 @@ class CustomerFunctions(ViewSet):
                             field_id=review.id,
                         )
 
-            return Response(data="Review Added", status=status.HTTP_201_CREATED)
+            return Response(data="Review added", status=status.HTTP_201_CREATED)
         return Response(data="Data is missing", status=status.HTTP_204_NO_CONTENT)
 
     def get_order_review(
@@ -267,12 +266,13 @@ class CustomerFunctions(ViewSet):
         )
 
     def to_review_items(self, request):
-
         customer = get_customer(request.user)
         order_items = OrderItems.objects.filter(
-            order__customer=customer, has_review=False
+            order__customer=customer, has_review=False, order__order_status="005"
         )
+
         data = []
+
         for row in order_items:
             data.append(
                 {

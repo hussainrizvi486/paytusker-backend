@@ -41,6 +41,22 @@ class ProductsListPagination(PageNumberPagination):
 
 class ProductsApi(ViewSet):
     # Product API Methods
+    def get_home_page_products(self, request):
+        home_sections = ["Just For You", "Explore Digital Products"]
+        products_data = {
+            "Just For You": Product.objects.list_queryset()[0:20],
+            "Explore Digital Products": Product.objects.list_queryset().filter(
+                is_digital=True
+            )[0:20],
+        }
+
+        for key in products_data.keys():
+            products_data[key] = ProductListSerializer(
+                products_data.get(key), many=True, context={"request": request}
+            ).data
+
+        return Response(data=products_data)
+
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
 
@@ -224,7 +240,7 @@ class ProductsApi(ViewSet):
                     "review_content": obj.review_content,
                     "rating": obj.rating or 0,
                     "customer_name": obj.customer.customer_name,
-                    "created_on": obj.creation.strftime("%d-%m-%Y"),
+                    "created_on": obj.creation.strftime("%B %d, %Y"),
                     "images": get_serialized_model_media(
                         "OrderReview", obj.id, self.request
                     ),
@@ -256,6 +272,7 @@ class ProductsApi(ViewSet):
         variant_attr_object = ProductVariantAttribute.objects.filter(
             product=varient_object
         )
+
         if variant_attr_object:
             for attr in variant_attr_object.iterator():
                 attributes.append(
@@ -266,17 +283,6 @@ class ProductsApi(ViewSet):
                 )
 
         return attributes
-
-
-class ProductApi(APIView):
-    def get(self, request):
-        products = (
-            Product.objects.all().order_by("rating").exclude(item_type="002")[:36]
-        )
-        serailized_data = ProductListSerializer(
-            products, many=True, context={"request": request}
-        )
-        return Response(status=200, data=serailized_data.data)
 
 
 class SearchProductsApi(APIView):
@@ -293,24 +299,26 @@ class SearchProductsApi(APIView):
 
         products_queryset = None
         pagniator = ProductsListPagination()
-
+        if not query and not category_id:
+            return Response(data="Please enter a query or category id")
         if query:
             query = str(query).strip()
             vector = SearchVector("product_name", "description")
             search_query = SearchQuery(query)
             products_queryset = (
-                Product.objects.annotate(
-                    rank=SearchRank(vector=vector, query=search_query)
-                )
+                Product.objects.list_queryset()
+                .annotate(rank=SearchRank(vector=vector, query=search_query))
                 .exclude(item_type="002")
                 .filter(rank__gte=0.001)
                 .order_by("-rank")
             )
 
         elif category_id:
-            products_queryset = Product.objects.filter(
-                category__id=category_id
-            ).exclude(item_type="002")
+            products_queryset = (
+                Product.objects.list_queryset()
+                .filter(category__id=category_id)
+                .exclude(item_type="002")
+            )
 
         if products_queryset:
             filters_attributes = self.get_search_product_attributes(products_queryset)
@@ -347,9 +355,9 @@ class SearchProductsApi(APIView):
                     products_data.data, {"filters_attributes": filters_attributes}
                 )
 
-            return Response(data={"results": [], "message": "No items Found"})
+        return Response(data={"results": [], "message": "No items Found"})
 
-        return Response(data="Please enter a query or category id")
+        # return Response(data="Please enter a query or category id")
 
     def get_search_product_attributes(self, products_queryset):
         variant_queryset = ProductVariantAttribute.objects.filter(
@@ -376,16 +384,25 @@ class SearchProductsApi(APIView):
 
 class ProductCategory(ViewSet):
     def get_categories(self, request):
-        category_queryset = Category.objects.all()
+        category_queryset = Category.objects.filter(image__isnull=False)
+
         serialized_data = [
             {
                 "name": row.name,
                 "image": (
                     request.build_absolute_uri(row.image.url) if row.image else None
                 ),
+                "digital": row.digital,
                 "id": row.id,
             }
             for row in category_queryset
         ]
 
-        return Response(data={"data": serialized_data})
+        category_data = {"phyical": [], "digital": []}
+        for row in serialized_data:
+            if row.get("digital"):
+                category_data["digital"].append(row)
+            else:
+                category_data["phyical"].append(row)
+
+        return Response(data={"categories": category_data})

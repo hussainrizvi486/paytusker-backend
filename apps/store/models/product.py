@@ -4,8 +4,11 @@ from .common import Category
 
 
 class ProductManager(models.Manager):
-    def get_queryset(self) -> models.QuerySet:
-        return super().get_queryset().filter(disabled=False)
+    def list_queryset(self) -> models.QuerySet:
+        return super().get_queryset().filter(disabled=False).exclude(item_type="002")
+
+    # def get_queryset(self) -> models.QuerySet:
+    # return super().get_queryset().filter(disabled=False)
 
 
 class Product(BaseModel):

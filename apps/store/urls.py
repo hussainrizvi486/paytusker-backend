@@ -1,5 +1,5 @@
 from django.urls import path
-from .api.product import ProductApi, ProductsApi, SearchProductsApi, ProductCategory
+from .api.product import ProductsApi, SearchProductsApi, ProductCategory
 from .api.cart import CartApi
 from .api.order import OrderApi, CustomerFunctions, order_payment_confirm_webhook
 from .erpnext.apis import ERPNextProductsApi, ERPNextItemGroupsApi
@@ -31,12 +31,16 @@ urlpatterns = [
         ProductsApi.as_view({"get": "get_product_detail"}),
     ),
     path(
+        "product/home",
+        ProductsApi.as_view({"get": "get_home_page_products"}),
+    ),
+    path("product/search", SearchProductsApi.as_view()),
+    path(
         "category/get",
         ProductCategory.as_view({"get": "get_categories"}),
     ),
-    path("product/search", SearchProductsApi.as_view()),
-    path("product/create", ProductsApi.as_view({"post": "create_product"})),
-    path("product/update", ProductsApi.as_view({"post": "update_product"})),
+    # path("product/create", ProductsApi.as_view({"post": "create_product"})),
+    # path("product/update", ProductsApi.as_view({"post": "update_product"})),
     # Cart Routes
     path("customer/cart/add", CartApi.as_view({"post": "add_to_cart"})),
     path("customer/cart/get", CartApi.as_view({"get": "get_cart_detail"})),
@@ -57,8 +61,6 @@ urlpatterns = [
         "customer/reviews/pending",
         CustomerFunctions.as_view({"get": "to_review_items"}),
     ),
-    # old routes
-    path("get-products", ProductApi.as_view()),
 ]
 
 

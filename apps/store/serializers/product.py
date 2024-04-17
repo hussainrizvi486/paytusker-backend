@@ -25,9 +25,11 @@ class ProductListSerializer(serializers.ModelSerializer):
         return None
 
     def get_cover_image(self, object):
-        request = self.context.get("request")
         if object.cover_image:
-            return request.build_absolute_uri(object.cover_image.url)
+            if self.context.get("request"):
+                request = self.context.get("request")
+                return request.build_absolute_uri(object.cover_image.url)
+            return object.cover_image.url
 
     def get_price(self, object):
         return format_currency(object.price or 0)

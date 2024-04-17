@@ -6,6 +6,7 @@ class Category(BaseModel):
     name = models.CharField(max_length=500)
     image = models.ImageField(null=True, blank=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
+    digital = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         if self.parent is None:
@@ -14,7 +15,6 @@ class Category(BaseModel):
 
 
 class Discount(BaseModel):
-    # product = models.ForeignKey(Product, on_delete=models.CASCADE)
     discount_percentage = models.DecimalField(decimal_places=2, max_digits=5)
     start_date = models.DateField()
     end_date = models.DateField()
