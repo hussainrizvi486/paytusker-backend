@@ -28,7 +28,6 @@ class UserApi(ViewSet):
         if address_id:
             address_query_set = Address.objects.get(id=address_id)
             if address_query_set:
-                print(address_query_set)
                 serailized_data = UserAddressSerializer(address_query_set)
                 return Response(data=serailized_data.data)
             return Response(data=None)
@@ -40,17 +39,16 @@ class UserApi(ViewSet):
             return Response(data=[])
 
     def add_user_address(self, request):
-        data = request.data
-        address_object = Address.objects.create(
-            user=self.request.user,
-            address_title=data.get("address_title"),
-            address_type=data.get("address_type"),
-            country=data.get("country"),
-            state=data.get("state"),
-            city=data.get("city"),
-            address_line_1=data.get("address_line_1"),
-        )
+        data: dict = request.data
+        data["user"] = request.user
 
+        if data.get("default"):
+            old_df_addr = Address.objects.filter(default=True).first()
+            if old_df_addr:
+                old_df_addr.default = False
+                old_df_addr.save()
+
+        address_object = Address.objects.create(**data)
         address_object.save()
         return Response(status=status.HTTP_201_CREATED, data="Address Created")
 
@@ -68,6 +66,12 @@ class UserApi(ViewSet):
 
         if request_data.get("action") == "edit":
             address_object = request_data.get("address_object")
+            if address_object.get("default"):
+                old_df_addr = Address.objects.filter(default=True).first()
+                if old_df_addr:
+                    old_df_addr.default = False
+                    old_df_addr.save()
+
             address_record = Address.objects.filter(id=address_id)
             address_record.update(**address_object)
 

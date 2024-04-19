@@ -22,6 +22,7 @@ class Order(BaseModel):
             ("003", "In Process"),
             ("004", "Shipping"),
             ("005", "Delivered"),
+            ("006", "Cancelled"),
         ),
         null=True,
         blank=True,

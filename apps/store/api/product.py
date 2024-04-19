@@ -6,9 +6,9 @@ from rest_framework import status
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
-from apps.store.serializers import ProductListSerializer
+from apps.store.serializers import ProductListSerializer, CategoryListSerializer
 from apps.store.models.order import OrderReview
-from apps.store.models.product import (
+from apps.store.models import (
     Product,
     ProductMedia,
     Category,
@@ -44,7 +44,7 @@ class ProductsApi(ViewSet):
     def get_home_page_products(self, request):
         home_sections = ["Just For You", "Explore Digital Products"]
         products_data = {
-            "Just For You": Product.objects.list_queryset()[0:20],
+            "Just For You": Product.objects.list_queryset()[0:12],
             "Explore Digital Products": Product.objects.list_queryset().filter(
                 is_digital=True
             )[0:20],
@@ -384,25 +384,16 @@ class SearchProductsApi(APIView):
 
 class ProductCategory(ViewSet):
     def get_categories(self, request):
-        category_queryset = Category.objects.filter(image__isnull=False)
+        phyical = Category.objects.filter(digital=False)[:20]
+        digital = Category.objects.filter(digital=True)[:20]
 
-        serialized_data = [
-            {
-                "name": row.name,
-                "image": (
-                    request.build_absolute_uri(row.image.url) if row.image else None
-                ),
-                "digital": row.digital,
-                "id": row.id,
-            }
-            for row in category_queryset
-        ]
-
-        category_data = {"phyical": [], "digital": []}
-        for row in serialized_data:
-            if row.get("digital"):
-                category_data["digital"].append(row)
-            else:
-                category_data["phyical"].append(row)
+        category_data = {
+            "phyical": CategoryListSerializer(
+                phyical, many=True, context={"request": request}
+            ).data,
+            "digital": CategoryListSerializer(
+                digital, many=True, context={"request": request}
+            ).data,
+        }
 
         return Response(data={"categories": category_data})

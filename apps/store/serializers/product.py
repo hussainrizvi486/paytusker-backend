@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.store.models import Product
+from apps.store.models import Product, Category
 from server.utils import format_currency
 
 
@@ -33,3 +33,17 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     def get_price(self, object):
         return format_currency(object.price or 0)
+
+
+class CategoryListSerializer(serializers.ModelSerializer):
+    # image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ["name", "image"]
+
+    def get_image(self, object):
+        if self.context.get("request") and object.image:
+            return self.context.get("request").build_absolute_uri(object.image.url)
+
+        return object.image.url or None

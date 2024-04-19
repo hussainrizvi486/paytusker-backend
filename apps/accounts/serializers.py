@@ -32,6 +32,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
             "country",
             "state",
             "city",
+            "default",
             "address_line_1",
             "address_display",
         ]

@@ -120,7 +120,6 @@ class OrderApi(ViewSet):
     def get_customer_orders(self, request):
         customer = get_customer(request.user)
         filters = {}
-
         if request.GET.get("filters"):
             try:
                 filters = json.loads(filters)
@@ -137,6 +136,14 @@ class OrderApi(ViewSet):
             orders_qs.filter(order_status=filters.get("order_status"))
 
         data = []
+        ORDER_STATUS_OBJECT = {
+            "001": {"status": "Pending", "color": "#ffae00"},
+            "002": {"status": "Confirmed", "color": "#0066ff"},
+            "003": {"status": "In Process", "color": "#ff9900"},
+            "004": {"status": "Going For Delivery", "color": "#339966"},
+            "005": {"status": "Deliverd", "color": "#0eca05"},
+            "006": {"status": "Cancelled", "color": "#ff0000"},
+        }
         if orders_qs:
             for order in orders_qs:
                 order_dict = {
@@ -148,7 +155,8 @@ class OrderApi(ViewSet):
                     "payment_status": order.payment_status,
                     "payment_method": order.payment_method,
                     "delivery_status": order.delivery_status,
-                    "order_status": order.order_status,
+                    "order_status": ORDER_STATUS_OBJECT.get(order.order_status).get("status"),
+                    "status_color": ORDER_STATUS_OBJECT.get(order.order_status).get("color"),
                 }
 
                 order_items_qs = OrderItems.objects.filter(order=order).order_by(
@@ -305,7 +313,6 @@ from django.views.decorators.csrf import csrf_exempt
 def order_payment_confirm_webhook(request):
     payload = request.body
     event = None
-    # print(request.META)
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
     if sig_header:
         print(f"sig_header {sig_header},\n endpoint_secret {endpoint_secret}")

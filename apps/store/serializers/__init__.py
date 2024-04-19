@@ -1,1 +1,1 @@
-from .product import ProductListSerializer
+from .product import ProductListSerializer, CategoryListSerializer
