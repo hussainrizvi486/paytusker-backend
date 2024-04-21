@@ -105,6 +105,7 @@ class ERPNextProductsApi(ViewSet):
             "price",
             "category_id",
             "cover_image",
+            "is_digital",
             "stock",
         ]
 
@@ -128,6 +129,7 @@ class ERPNextProductsApi(ViewSet):
             "stock": data.get("stock"),
             "category": get_category(data.get("category_id")),
             "item_type": data.get("item_type"),
+            "is_digital": data.get("is_digital"),
         }
 
         if data.get("product_id") and data.get("item_type") == "003":
@@ -196,13 +198,15 @@ class ERPNextItemGroupsApi(ViewSet):
 
         if category_id:
             try:
-                category = Category.objects.get(id=category_id)
-                for key, value in category_object.items():
-                    setattr(category, key, value)
+                category = Category.objects.filter(id=category_id).update(
+                    **category_object
+                )
+                # for key, value in category_object.items():
+                #     setattr(category, key, value)
 
-                if not category_object.get("image"):
-                    category.image.delete()
-                category.save()
+                # if not category_object.get("image"):
+                #     category.image.delete()
+                # category.save()
             except Category.DoesNotExist:
                 return Response(
                     data={

@@ -80,9 +80,9 @@ class OrderApi(ViewSet):
                         "unit_amount": math.ceil(oi.rate * 100),
                         "product_data": {
                             "name": oi.item.product_name,
-                            "images": request.build_absolute_uri(
-                                oi.item.cover_image.url if oi.item.cover_image else ""
-                            ),
+                            # "images": request.build_absolute_uri(
+                            #     oi.item.cover_image.url if oi.item.cover_image else ""
+                            # ),
                         },
                     },
                     "quantity": int(oi.qty),
