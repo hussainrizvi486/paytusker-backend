@@ -22,12 +22,12 @@ endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 @permission_classes([IsCustomerUser])
 class OrderApi(ViewSet):
     def create_order(self, request):
-        available_payment_methods = [
-            # "card",
-            # "paypal",
-            # "klarna",
-            "apple_pay"
-        ]
+        # available_payment_methods = [
+        #     # "card",
+        #     # "paypal",
+        #     # "klarna",
+        #     # "apple_pay"
+        # ]
 
         data = request.data
         customer = get_customer(user=request.user)
@@ -90,7 +90,7 @@ class OrderApi(ViewSet):
             )
 
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=available_payment_methods,
+            # payment_method_types=available_payment_methods,
             line_items=stripe_line_items,
             metadata={"order_id": order.id},
             mode="payment",
