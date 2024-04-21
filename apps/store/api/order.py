@@ -23,9 +23,10 @@ endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 class OrderApi(ViewSet):
     def create_order(self, request):
         available_payment_methods = [
-            "card",
-            "paypal",
-            "klarna",
+            # "card",
+            # "paypal",
+            # "klarna",
+            "apple_pay"
         ]
 
         data = request.data
@@ -37,11 +38,11 @@ class OrderApi(ViewSet):
                 data="User is not a customer", status=status.HTTP_403_FORBIDDEN
             )
 
-        if payment_method not in available_payment_methods:
-            return Response(
-                data="Please select valid payment method",
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        # if payment_method not in available_payment_methods:
+        #     return Response(
+        #         data="Please select valid payment method",
+        #         status=status.HTTP_403_FORBIDDEN,
+        #     )
 
         delivery_address = Address.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
@@ -89,7 +90,7 @@ class OrderApi(ViewSet):
             )
 
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=[payment_method],
+            payment_method_types=available_payment_methods,
             line_items=stripe_line_items,
             metadata={"order_id": order.id},
             mode="payment",
