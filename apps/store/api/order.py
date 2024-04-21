@@ -22,12 +22,10 @@ endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 @permission_classes([IsCustomerUser])
 class OrderApi(ViewSet):
     def create_order(self, request):
-        # available_payment_methods = [
-        #     # "card",
-        #     # "paypal",
-        #     # "klarna",
-        #     # "apple_pay"
-        # ]
+        available_payment_methods = [
+            "card",
+            "klarna",
+        ]
 
         data = request.data
         customer = get_customer(user=request.user)
@@ -38,11 +36,11 @@ class OrderApi(ViewSet):
                 data="User is not a customer", status=status.HTTP_403_FORBIDDEN
             )
 
-        # if payment_method not in available_payment_methods:
-        #     return Response(
-        #         data="Please select valid payment method",
-        #         status=status.HTTP_403_FORBIDDEN,
-        #     )
+        if payment_method not in available_payment_methods:
+            return Response(
+                data="Please select valid payment method",
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         delivery_address = Address.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
@@ -82,7 +80,9 @@ class OrderApi(ViewSet):
                         "unit_amount": math.ceil(oi.rate * 100),
                         "product_data": {
                             "name": oi.item.product_name,
-                            "images": request.build_absolute_uri(oi.item.cover_image),
+                            "images": request.build_absolute_uri(
+                                oi.item.cover_image.url if oi.item.cover_image else ""
+                            ),
                         },
                     },
                     "quantity": int(oi.qty),
@@ -90,7 +90,7 @@ class OrderApi(ViewSet):
             )
 
         checkout_session = stripe.checkout.Session.create(
-            # payment_method_types=available_payment_methods,
+            payment_method_types=[payment_method],
             line_items=stripe_line_items,
             metadata={"order_id": order.id},
             mode="payment",
