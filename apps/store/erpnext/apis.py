@@ -185,7 +185,6 @@ class ERPNextProductsApi(ViewSet):
 class ERPNextItemGroupsApi(ViewSet):
     def sync_category(self, request):
         validated_data = self.validate_category_object(request.data)
-
         if not validated_data.get("category_object"):
             return Response(
                 data={"message": validated_data.get("message")},
@@ -233,15 +232,16 @@ class ERPNextItemGroupsApi(ViewSet):
         if not data.get("name"):
             return {"message": "Please provide category name"}
 
-        category_object = {"name": data.get("name")}
+        category_object = {
+            "name": data.get("name"),
+            "digital": bool(data.geT("digital")),
+        }
+
         if data.get("image"):
             category_object["image"] = data.get("image")
 
         if data.get("parent"):
-            try:
-                category_object["parent"] = Category.objects.get(id=data.get("parent"))
-            except Category.DoesNotExist:
-                return {"message": "Parent category not found"}
+            category_object["parent"] = Category.objects.get(id=data.get("parent"))
         else:
             category_object["parent"] = None
 
@@ -263,7 +263,7 @@ class ERPNextItemGroupsApi(ViewSet):
                 )
             except Category.DoesNotExist:
                 return Response(
-                    data={"message": "No category found with this id"}, 
+                    data={"message": "No category found with this id"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:

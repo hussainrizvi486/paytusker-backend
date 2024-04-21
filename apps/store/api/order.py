@@ -24,6 +24,7 @@ class OrderApi(ViewSet):
     def create_order(self, request):
         available_payment_methods = [
             "card",
+            "paypal",
             "klarna",
         ]
 
@@ -155,8 +156,12 @@ class OrderApi(ViewSet):
                     "payment_status": order.payment_status,
                     "payment_method": order.payment_method,
                     "delivery_status": order.delivery_status,
-                    "order_status": ORDER_STATUS_OBJECT.get(order.order_status).get("status"),
-                    "status_color": ORDER_STATUS_OBJECT.get(order.order_status).get("color"),
+                    "order_status": ORDER_STATUS_OBJECT.get(order.order_status).get(
+                        "status"
+                    ),
+                    "status_color": ORDER_STATUS_OBJECT.get(order.order_status).get(
+                        "color"
+                    ),
                 }
 
                 order_items_qs = OrderItems.objects.filter(order=order).order_by(
