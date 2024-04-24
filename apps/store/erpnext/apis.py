@@ -196,41 +196,25 @@ class ERPNextItemGroupsApi(ViewSet):
         category_object = validated_data.get("category_object")
         category_id = validated_data.get("category_id")
 
-        if category_id:
-            try:
-                category = Category.objects.filter(id=category_id).update(
-                    **category_object
+        try:
+            if category_id:
+                category = Category.objects.get(id=category_id)
+                category, created = Category.objects.update_or_create(
+                    id=category_id, defaults=category_object
                 )
-                # for key, value in category_object.items():
-                #     setattr(category, key, value)
+            else:
+                category = Category.objects.create(**category_object)
 
-                # if not category_object.get("image"):
-                #     category.image.delete()
-                # category.save()
-            except Category.DoesNotExist:
+            if category:
                 return Response(
                     data={
-                        "message": "No category found with this id",
-                        "category_id": category_id,
+                        "message": "Category synced successfully!",
+                        "category_id": category.id,
                     },
-                    status=status.HTTP_403_FORBIDDEN,
+                    status=status.HTTP_200_OK,
                 )
-        else:
-            category = Category.objects.create(**category_object)
-
-        if category:
-            return Response(
-                data={
-                    "message": "Category synced successfully!",
-                    "category_id": category.id,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        return Response(
-            data={"message": "Internal server error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        except Exception as e:
+            return Response(data={"message": e}, status=status.HTTP_403_FORBIDDEN)
 
     def validate_category_object(self, data: dict):
         if not data.get("name"):
@@ -238,7 +222,7 @@ class ERPNextItemGroupsApi(ViewSet):
 
         category_object = {
             "name": data.get("name"),
-            "digital": bool(data.geT("digital")),
+            "digital": bool(data.get("digital")),
         }
 
         if data.get("image"):
