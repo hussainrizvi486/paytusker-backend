@@ -44,10 +44,10 @@ class ProductsApi(ViewSet):
     def get_home_page_products(self, request):
         home_sections = ["Just For You", "Explore Digital Products"]
         products_data = {
-            "Just For You": Product.objects.list_queryset()[0:12],
-            "Explore Digital Products": Product.objects.list_queryset().filter(
-                is_digital=True
-            )[0:20],
+            "Just For You": Product.objects.list_queryset()[0:24],
+            # "Explore Digital Products": Product.objects.list_queryset().filter(
+            #     is_digital=True
+            # )[0:20],
         }
 
         for key in products_data.keys():
@@ -55,7 +55,16 @@ class ProductsApi(ViewSet):
                 products_data.get(key), many=True, context={"request": request}
             ).data
 
-        return Response(data=products_data)
+        return Response(
+            data={
+                "home_products": products_data,
+                "digital_products": ProductListSerializer(
+                    Product.objects.list_queryset().filter(is_digital=True)[0:20],
+                    many=True,
+                    context={"request": request},
+                ).data,
+            }
+        )
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")

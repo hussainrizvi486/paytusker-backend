@@ -198,7 +198,10 @@ class ERPNextItemGroupsApi(ViewSet):
 
         try:
             if category_id:
-                category = Category.objects.get(id=category_id)
+                if category_object.get("image") is None:
+                    category = Category.objects.get(id=category_id)
+                    category.image.delete()
+
                 category, created = Category.objects.update_or_create(
                     id=category_id, defaults=category_object
                 )
@@ -224,10 +227,7 @@ class ERPNextItemGroupsApi(ViewSet):
             "name": data.get("name"),
             "digital": bool(data.get("digital")),
         }
-
-        if data.get("image"):
-            category_object["image"] = data.get("image")
-
+        category_object["image"] = data.get("image")
         if data.get("parent"):
             category_object["parent"] = Category.objects.get(id=data.get("parent"))
         else:
