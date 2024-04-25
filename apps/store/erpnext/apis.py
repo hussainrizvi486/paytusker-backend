@@ -225,7 +225,7 @@ class ERPNextItemGroupsApi(ViewSet):
 
         category_object = {
             "name": data.get("name"),
-            "digital": bool(data.get("digital")),
+            "digital": data.get("digital"),
         }
         category_object["image"] = data.get("image")
         if data.get("parent"):
