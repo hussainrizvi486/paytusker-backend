@@ -7,6 +7,7 @@ from django.core import serializers
 from rest_framework import status
 from server.utils import exceute_sql_query
 from ..serializers import UserAddressSerializer
+from django.contrib.auth import authenticate
 
 
 @permission_classes([IsAuthenticated])
@@ -22,6 +23,32 @@ class UserApi(ViewSet):
         }
 
         return Response(data=data, status=status.HTTP_200_OK)
+
+    # api/user/password/update
+    def update_user_password(self, request):
+        data = request.data
+        if not data.get("current_password") or not data.get("new_password"):
+            return Response(
+                data={
+                    "message": "Please provide the current password and new password!"
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        user = authenticate(
+            email=request.user.email, password=data.get("current_password")
+        )
+
+        if user is None:
+            return Response(
+                data={"message": "Invalid credentials!"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        user_object = User.objects.get(id=request.user.id)
+        user_object.set_password(data.get("new_password"))
+        user_object.save()
+
+        return Response(data={"message": "Password updated successfully!"})
 
     def get_user_address(self, request):
         address_id = request.GET.get("id")

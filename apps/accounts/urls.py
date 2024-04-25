@@ -27,6 +27,10 @@ urlpatterns = [
         UserApi.as_view({"get": "get_user_address"}),
     ),
     path(
+        "user/password/update",
+        UserApi.as_view({"post": "update_user_password"}),
+    ),
+    path(
         "user/address/add",
         UserApi.as_view({"post": "add_user_address"}),
     ),
