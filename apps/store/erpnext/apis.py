@@ -124,7 +124,7 @@ class ERPNextProductsApi(ViewSet):
         product_object = {
             "product_name": data.get("product_name"),
             "description": data.get("description") or data.get("product_name"),
-            "price": Decimal(data.get("price")),
+            "net_price": Decimal(data.get("price")),
             "cover_image": data.get("cover_image"),
             "stock": data.get("stock"),
             "category": get_category(data.get("category_id")),

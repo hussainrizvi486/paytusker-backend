@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
-from apps.store.models.customer import CartItem, Cart
+from apps.store.models.customer import CartItem, Cart, Customer
 from apps.store.models.product import Product
 from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
@@ -54,45 +54,45 @@ class OrderApi(ViewSet):
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        order = Order.objects.create(
-            customer=customer,
-            order_status="001",
-            payment_method=payment_method,
-            payment_status=False,
-            delivery_address=delivery_address,
-        )
+        # order = Order.objects.create(
+        #     customer=customer,
+        #     order_status="001",
+        #     payment_method=payment_method,
+        #     payment_status=False,
+        #     delivery_address=delivery_address,
+        # )
+        items_data = []
+        stripe_line_items = []
 
         for item in cart_items:
-            OrderItems.objects.create(
-                order=order,
-                item=item.item,
-                qty=item.qty,
+            items_data.append(
+                {
+                    "id": item.item.id,
+                    "qty": float(item.qty),
+                }
             )
-
-        order.save()
-        order_items = OrderItems.objects.filter(order=order)
-        stripe_line_items = []
-        for oi in order_items:
             stripe_line_items.append(
                 {
                     "price_data": {
                         "currency": "usd",
-                        "unit_amount": math.ceil(oi.rate * 100),
+                        "unit_amount": math.ceil(item.item.price * 100),
                         "product_data": {
-                            "name": oi.item.product_name,
-                            # "images": request.build_absolute_uri(
-                            #     oi.item.cover_image.url if oi.item.cover_image else ""
-                            # ),
+                            "name": item.item.product_name,
                         },
                     },
-                    "quantity": int(oi.qty),
+                    "quantity": int(item.qty),
                 }
             )
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=[payment_method],
             line_items=stripe_line_items,
-            metadata={"order_id": order.id},
+            metadata={
+                "items": json.dumps(items_data),
+                "payment_method": payment_method,
+                "delivery_address": delivery_address.id,
+                "customer_id": customer.id,
+            },
             mode="payment",
             success_url=settings.STRIPE_PAYMENT_SUCCESS_URL,
             cancel_url=settings.STRIPE_PAYMENT_FAILED_URL,
@@ -101,10 +101,11 @@ class OrderApi(ViewSet):
 
         return Response(
             {
-                "order_id": order.id,
+                # "order_id": order.id,
                 "checkout_session": checkout_session.id,
                 "checkout_url": checkout_session.url,
-            }
+            },
+            status=status.HTTP_200_OK,
         )
 
     def validate_customer_origin(self, address_object, cart_items):
@@ -125,12 +126,12 @@ class OrderApi(ViewSet):
         if request.GET.get("filters"):
             try:
                 filters = json.loads(filters)
-            except Exception:
+            except json.JSONDecodeError:
                 filters = {}
 
         orders_qs = (
             Order.objects.filter(customer=customer)
-            .filter(payment_status=True)
+            # .filter(payment_status=True)
             .order_by("-creation")
         )
 
@@ -157,11 +158,15 @@ class OrderApi(ViewSet):
                     "payment_status": order.payment_status,
                     "payment_method": order.payment_method,
                     "delivery_status": order.delivery_status,
-                    "order_status": ORDER_STATUS_OBJECT.get(order.order_status).get(
-                        "status"
+                    "order_status": (
+                        ORDER_STATUS_OBJECT.get(order.order_status).get("status")
+                        if ORDER_STATUS_OBJECT.get(order.order_status) is not None
+                        else ""
                     ),
-                    "status_color": ORDER_STATUS_OBJECT.get(order.order_status).get(
-                        "color"
+                    "status_color": (
+                        ORDER_STATUS_OBJECT.get(order.order_status).get("color")
+                        if ORDER_STATUS_OBJECT.get(order.order_status) is not None
+                        else ""
                     ),
                 }
 
@@ -321,33 +326,37 @@ def order_payment_confirm_webhook(request):
     event = None
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
     if sig_header:
-        print(f"sig_header {sig_header},\n endpoint_secret {endpoint_secret}")
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
             if event.type == "checkout.session.completed":
-                order_id = event["data"]["object"]["metadata"]["order_id"]
-                try:
-                    order_queryset = Order.objects.get(id=order_id)
-                    order_queryset.payment_status = True
-                    order_queryset.save()
-                    Cart.objects.filter(customer=order_queryset.customer).delete()
-                except Order.DoesNotExist:
-                    ...
+                metadata = event["data"]["object"]["metadata"]
+                order_items = metadata["items"]
+                order_items = json.loads(order_items)
 
-            else:
-                print("Unhandled event type {}".format(event.type))
+                payment_method = metadata["payment_method"]
+                delivery_address = Address.objects.get(id=metadata["delivery_address"])
+                customer = Customer.objects.get(id=metadata["customer_id"])
+                order_queryset = Order.objects.create(
+                    delivery_address=delivery_address,
+                    payment_method=payment_method,
+                    order_status="001",
+                    payment_status=True,
+                    customer=customer,
+                )
+                from decimal import Decimal
 
-                if event.type == "checkout.session.async_payment_failed":
-                    order_id = event["data"]["object"]["metadata"]["order_id"]
-                    try:
-                        order_queryset = Order.objects.get(id=order_id)
-                        order_queryset.delete()
-                    except Order.DoesNotExist:
-                        ...
+                for item in order_items:
+                    product = Product.objects.get(id=item.get("id"))
+                    OrderItems.objects.create(
+                        order=order_queryset,
+                        qty=Decimal(item.get("qty")),
+                        item=product,
+                    )
 
-                print("Unhandled event type {}".format(event.type))
+                order_queryset.save()
+                Cart.objects.filter(customer=order_queryset.customer).delete()
+
         except Exception as e:
-            print(e)
             return HttpResponse(status=400)
 
         return HttpResponse(status=200)

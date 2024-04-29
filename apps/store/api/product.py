@@ -308,8 +308,10 @@ class SearchProductsApi(APIView):
 
         products_queryset = None
         pagniator = ProductsListPagination()
+
         if not query and not category_id:
             return Response(data="Please enter a query or category id")
+
         if query:
             query = str(query).strip()
             vector = SearchVector("product_name", "description")
@@ -366,8 +368,6 @@ class SearchProductsApi(APIView):
 
         return Response(data={"results": [], "message": "No items Found"})
 
-        # return Response(data="Please enter a query or category id")
-
     def get_search_product_attributes(self, products_queryset):
         variant_queryset = ProductVariantAttribute.objects.filter(
             product__in=products_queryset
@@ -387,7 +387,6 @@ class SearchProductsApi(APIView):
                 attribute_object[dict.get("attribute")].add(dict.get("attribute_value"))
             else:
                 attribute_object[dict.get("attribute")] = {dict.get("attribute_value")}
-
         return attribute_object
 
 
@@ -404,5 +403,4 @@ class ProductCategory(ViewSet):
                 digital, many=True, context={"request": request}
             ).data,
         }
-
         return Response(data={"categories": category_data})

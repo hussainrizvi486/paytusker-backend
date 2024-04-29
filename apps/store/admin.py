@@ -4,6 +4,7 @@ from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
+    ProductCategoryCommission
 )
 from apps.store.models.common import Discount, Category
 from apps.store.models.customer import Customer, Cart, CartItem
@@ -19,7 +20,7 @@ class ProductVariantAttributeInline(admin.TabularInline):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_filter = ["disabled", "creation"]
+    list_filter = ["disabled", "creation", "category"]
     list_display = ["product_name", "price", "item_type", "rating"]
     ordering = ["-modified"]
     inlines = [
@@ -39,6 +40,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Discount)
+admin.site.register(ProductCategoryCommission)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItems)
