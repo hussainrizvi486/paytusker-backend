@@ -355,6 +355,10 @@ class SearchProductsApi(APIView):
                 products_queryset = products_queryset.filter(
                     price__lte=Decimal(filters.get("max_price"))
                 )
+            if filters.get("rating"):
+                products_queryset = products_queryset.filter(
+                    price__gte=Decimal(filters.get("rating"))
+                )
 
             if products_queryset:
                 products_res = pagniator.paginate_queryset(products_queryset, request)

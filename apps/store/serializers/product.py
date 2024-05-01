@@ -40,7 +40,7 @@ class CategoryListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["name", "image"]
+        fields = ["id", "name", "image"]
 
     def get_image(self, object):
         if self.context.get("request") and object.image:
