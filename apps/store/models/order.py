@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import Avg
-
+from typing import List
 from .base import BaseModel
 from .product import Product
 from .customer import Customer
@@ -53,6 +53,12 @@ class Order(BaseModel):
         self.total_qty = sum(item.qty for item in self.order_items.all())
         self.grand_total = sum(item.amount for item in self.order_items.all())
         super().save(*args, **kwargs)
+
+    # def get_order_items(self):
+    #     serailized_data = []
+    #     orderitems_queryset: List[OrderItems] = self.order_items_set.all()
+    #     for row in orderitems_queryset:
+    #         serailized_data.append({"product_id": row.item.id, "qty": row.qty, })
 
 
 class OrderItems(BaseModel):

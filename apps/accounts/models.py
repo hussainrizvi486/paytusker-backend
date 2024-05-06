@@ -69,3 +69,20 @@ class Address(BaseModel):
 
     def __str__(self) -> str:
         return f" {self.address_title} - {self.user.email}"
+
+    def get_address_html(self) -> str:
+        default_addr_tag = ""
+
+        if self.default:
+            default_addr_tag = """<div 
+            style="padding: .25rem .45rem;font-weight: 500;font-size: var(--text-xs);background-color: #ededed; max-width: max-content;border-radius: .25rem;">
+            Default Address</div>"""
+
+        address_html = f"""<div style="font-size: .875rem;">        
+            <div>{self.address_type}<div>
+            {default_addr_tag}
+            <div>{self.city}, {self.country}<div>
+            <div>{self.address_line_1}<div>
+        <div>"""
+
+        return address_html
