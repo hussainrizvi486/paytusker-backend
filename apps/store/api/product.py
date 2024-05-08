@@ -299,7 +299,7 @@ class SearchProductsApi(APIView):
         query = request.GET.get("query")
         category_id = request.GET.get("category")
         filters = {}
-
+        
         if request.GET.get("filters"):
             try:
                 filters = json.loads(request.GET.get("filters"))

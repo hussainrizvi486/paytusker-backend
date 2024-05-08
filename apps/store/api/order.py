@@ -1,10 +1,12 @@
 import json
 import stripe
 import math
+from decimal import Decimal
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
@@ -13,7 +15,9 @@ from apps.store.models.product import Product
 from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
 from apps.accounts.models import Address
+from apps.store.erpnext import sync_order
 from server import settings
+
 
 stripe.api_key = settings.STRIPE_API_KEY
 endpoint_secret = settings.STRIPE_END_SECRECT_KEY
@@ -54,13 +58,6 @@ class OrderApi(ViewSet):
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        # order = Order.objects.create(
-        #     customer=customer,
-        #     order_status="001",
-        #     payment_method=payment_method,
-        #     payment_status=False,
-        #     delivery_address=delivery_address,
-        # )
         items_data = []
         stripe_line_items = []
 
@@ -101,7 +98,6 @@ class OrderApi(ViewSet):
 
         return Response(
             {
-                # "order_id": order.id,
                 "checkout_session": checkout_session.id,
                 "checkout_url": checkout_session.url,
             },
@@ -315,11 +311,6 @@ class CustomerFunctions(ViewSet):
         return Response(data={"reviews": None})
 
 
-import json
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-
-
 @csrf_exempt
 def order_payment_confirm_webhook(request):
     payload = request.body
@@ -343,7 +334,6 @@ def order_payment_confirm_webhook(request):
                     payment_status=True,
                     customer=customer,
                 )
-                from decimal import Decimal
 
                 for item in order_items:
                     product = Product.objects.get(id=item.get("id"))
@@ -355,6 +345,8 @@ def order_payment_confirm_webhook(request):
 
                 order_queryset.save()
                 Cart.objects.filter(customer=order_queryset.customer).delete()
+
+                sync_order(order_queryset)
 
         except Exception as e:
             return HttpResponse(status=400)
