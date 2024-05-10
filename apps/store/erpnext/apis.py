@@ -22,6 +22,9 @@ class ERPNextProductsApi(ViewSet):
 
         product_object: dict = validated_product_data.get("product_object")
         product_media_object: dict = validated_product_data.get("product_media_object")
+
+        print(product_object)
+
         product_id = validated_product_data.get("product_id")
         variants_object = None
         if validated_product_data.get("variants_object"):
@@ -104,9 +107,9 @@ class ERPNextProductsApi(ViewSet):
             "product_name",
             "price",
             "category_id",
-            "cover_image",
-            "is_digital",
-            "stock",
+            # "cover_image",
+            # "is_digital",
+            # "stock",
         ]
 
         for field in mandatory_fields:
@@ -126,13 +129,13 @@ class ERPNextProductsApi(ViewSet):
             "description": data.get("description") or data.get("product_name"),
             "net_price": Decimal(data.get("price")),
             "cover_image": data.get("cover_image"),
-            "stock": data.get("stock"),
+            "stock": data.get("stock") or 1,
             "category": get_category(data.get("category_id")),
             "item_type": data.get("item_type"),
-            "is_digital": data.get("is_digital"),
+            "is_digital": bool(data.get("is_digital")),
         }
 
-        if data.get("product_id") and data.get("item_type") == "003":
+        if data.get("item_type") == "003":
             product_object["template"] = Product.objects.get(id=data.get("template_id"))
 
         variants_object = data.get("variant_attributes")

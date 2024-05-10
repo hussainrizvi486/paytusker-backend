@@ -345,7 +345,6 @@ def order_payment_confirm_webhook(request):
 
                 order_queryset.save()
                 Cart.objects.filter(customer=order_queryset.customer).delete()
-
                 sync_order(order_queryset)
 
         except Exception as e:

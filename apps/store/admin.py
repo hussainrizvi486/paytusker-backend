@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.store.models.base import ModelMedia
+from apps.store.models.base import ModelMedia, StoreErrorLogs
 from apps.store.models.product import (
     Product,
     ProductMedia,
@@ -49,3 +49,4 @@ admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(OrderReview)
 admin.site.register(ModelMedia)
+admin.site.register(StoreErrorLogs)

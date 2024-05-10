@@ -2,6 +2,8 @@ from django.db import models
 from uuid import uuid4
 
 
+class StoreErrorLogs(models.Model):
+    log = models.TextField()
 
 
 class BaseModel(models.Model):

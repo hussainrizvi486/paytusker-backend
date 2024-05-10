@@ -76,9 +76,12 @@ class Product(BaseModel):
         if hasattr(self.category, "productcategorycommission"):
             commission_rate = self.category.productcategorycommission.commission_rate
             self.commission_rate = commission_rate
-            print(commission_rate)
+
             if self.net_price is not None:
                 self.price = self.net_price + (commission_rate / 100 * self.net_price)
+        else:
+            self.price = self.net_price
+
         return super().save(*args, **kwargs)
 
 
@@ -115,6 +118,8 @@ def update_product_commission(sender, instance, created=None, *args, **kwargs):
         if products_queryset:
             for product in products_queryset:
                 product.commission_rate = commission_rate
-                product.price = product.net_price + (commission_rate / 100 * product.net_price)
+                product.price = product.net_price + (
+                    commission_rate / 100 * product.net_price
+                )
 
             Product.objects.bulk_update(products_queryset, ["commission_rate"])
