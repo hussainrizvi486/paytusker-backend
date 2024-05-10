@@ -3,6 +3,7 @@ import json
 from apps.store.models.order import Order, OrderItems
 from server.settings import ERPNEXT_API_URL
 from apps.store.models import StoreErrorLogs
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 def get_order_items(order_queryset: Order):
@@ -14,10 +15,10 @@ def get_order_items(order_queryset: Order):
             {
                 "product_id": row.item.id,
                 "quantity": row.qty,
-                "net_rate": float(row.item.net_price),
-                "rate": float(row.item.price),
+                "net_rate": row.item.net_price,
+                "rate": row.item.price,
                 "commission_percent": row.item.commission_rate,
-                "commission_rate": float(row.item.price - row.item.net_price),
+                "commission_rate": row.item.price - row.item.net_price,
             }
         )
 
@@ -37,7 +38,7 @@ def sync_order(order_queryset: Order):
 
         res = requests.post(
             f"{ERPNEXT_API_URL}api/method/paytusker.django-integration.order.create_website_order",
-            data=json.dumps(body),
+            data=json.dumps(body, cls=DjangoJSONEncoder),
         )
         StoreErrorLogs.objects.create(log=f"""{res.status_code} \n\n {res.text}""")
     except Exception as e:
