@@ -14,10 +14,10 @@ def get_order_items(order_queryset: Order):
             {
                 "product_id": row.item.id,
                 "quantity": row.qty,
-                "net_rate": row.item.net_price,
-                "rate": row.item.price,
+                "net_rate": float(row.item.net_price),
+                "rate": float(row.item.price),
                 "commission_percent": row.item.commission_rate,
-                "commission_rate": row.item.price - row.item.net_price,
+                "commission_rate": float(row.item.price - row.item.net_price),
             }
         )
 
