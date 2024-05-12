@@ -15,6 +15,7 @@ from apps.store.models.product import Product
 from apps.store.models.base import ModelMedia
 from apps.store.permissions import IsCustomerUser
 from apps.accounts.models import Address
+from apps.store.pagination import ListQuerySetPagination
 from apps.store.erpnext import sync_order
 from server import settings
 
@@ -117,22 +118,12 @@ class OrderApi(ViewSet):
             return True
 
     def get_customer_orders(self, request):
+        paginator = ListQuerySetPagination(page_size=5)
         customer = get_customer(request.user)
-        filters = {}
-        if request.GET.get("filters"):
-            try:
-                filters = json.loads(filters)
-            except json.JSONDecodeError:
-                filters = {}
-
-        orders_qs = (
-            Order.objects.filter(customer=customer)
-            # .filter(payment_status=True)
-            .order_by("-creation")
-        )
-
-        if filters.get("order_status"):
-            orders_qs.filter(order_status=filters.get("order_status"))
+        orders_qs = Order.objects.filter(customer=customer).order_by("-creation")
+        print(len(orders_qs))
+        if request.GET.get("order_status"):
+            orders_qs = orders_qs.filter(order_status=request.GET.get("order_status"))
 
         data = []
         ORDER_STATUS_OBJECT = {
@@ -144,6 +135,7 @@ class OrderApi(ViewSet):
             "006": {"status": "Cancelled", "color": "#ff0000"},
         }
         if orders_qs:
+            orders_qs = paginator.paginate_queryset(orders_qs, request)
             for order in orders_qs:
                 order_dict = {
                     "order_id": order.order_id,
@@ -170,6 +162,7 @@ class OrderApi(ViewSet):
                     "-creation"
                 )
                 order_items = []
+
                 for oi in order_items_qs:
                     order_items.append(
                         {
@@ -184,9 +177,12 @@ class OrderApi(ViewSet):
                     )
 
                 order_dict["items"] = order_items
+
                 data.append(order_dict)
 
-        return Response(data=data, status=status.HTTP_200_OK)
+            return paginator.get_paginated_response(data)
+
+        return Response(data={"results": [], "message": "No Orders Found"})
 
 
 @permission_classes([IsCustomerUser])

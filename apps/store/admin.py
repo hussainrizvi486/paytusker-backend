@@ -4,9 +4,10 @@ from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
-    ProductCategoryCommission
+    ProductCategoryCommission,
+    ProductDiscount,
 )
-from apps.store.models.common import Discount, Category
+from apps.store.models.common import Category
 from apps.store.models.customer import Customer, Cart, CartItem
 from apps.store.models.order import Order, OrderItems, OrderReview
 
@@ -39,7 +40,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Product, ProductAdmin)
-admin.site.register(Discount)
+admin.site.register(ProductDiscount)
 admin.site.register(ProductCategoryCommission)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Order, OrderAdmin)

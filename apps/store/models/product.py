@@ -1,3 +1,4 @@
+from typing import Any, Iterable
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -43,6 +44,9 @@ class Product(BaseModel):
     net_price = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
+    product_price = models.DecimalField(
+        default=0, decimal_places=2, max_digits=12, null=True, blank=True
+    )
 
     price = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
@@ -50,6 +54,11 @@ class Product(BaseModel):
     commission_rate = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
+
+    discount_percentage = models.DecimalField(
+        default=0, decimal_places=2, max_digits=12, null=True, blank=True
+    )
+
     objects = ProductManager()
 
     def __str__(self) -> str:
@@ -77,10 +86,9 @@ class Product(BaseModel):
             commission_rate = self.category.productcategorycommission.commission_rate
             self.commission_rate = commission_rate
 
-            if self.net_price is not None:
-                self.price = self.net_price + (commission_rate / 100 * self.net_price)
-        else:
-            self.price = self.net_price
+        self.price = self.net_price + (self.commission_rate / 100 * self.net_price)
+        self.product_price = self.price
+        self.price = self.price - ((self.price / 100) * self.discount_percentage)
 
         return super().save(*args, **kwargs)
 
@@ -109,6 +117,27 @@ class ProductCategoryCommission(BaseModel):
         return f"{self.category} --> {self.commission_rate}"
 
 
+class ProductDiscount(BaseModel):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE)
+    discount_percentage = models.DecimalField(
+        default=0, decimal_places=2, max_digits=12, null=True, blank=True
+    )
+
+    def __str__(self) -> str:
+        return self.product.product_name
+
+    def save(self, *args, **kwargs) -> None:
+        self.product.discount_percentage = self.discount_percentage
+
+        self.product.save()
+        return super().save(*args, **kwargs)
+
+    def delete(self, using: Any = None, keep_parents: bool = False):
+        self.product.discount_percentage = 0
+        self.product.save()
+        return super().delete(using=using, keep_parents=keep_parents)
+
+
 @receiver(post_save, sender=ProductCategoryCommission)
 def update_product_commission(sender, instance, created=None, *args, **kwargs):
     commission_rate = instance.commission_rate
@@ -121,5 +150,4 @@ def update_product_commission(sender, instance, created=None, *args, **kwargs):
                 product.price = product.net_price + (
                     commission_rate / 100 * product.net_price
                 )
-
             Product.objects.bulk_update(products_queryset, ["commission_rate"])

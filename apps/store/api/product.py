@@ -396,8 +396,8 @@ class SearchProductsApi(APIView):
 
 class ProductCategory(ViewSet):
     def get_categories(self, request):
-        physical = Category.objects.filter(digital=False)[:20]
-        digital = Category.objects.filter(digital=True)[:20]
+        physical = Category.objects.filter(digital=False)[:12]
+        digital = Category.objects.filter(digital=True)[:12]
 
         category_data = {
             "physical": CategoryListSerializer(

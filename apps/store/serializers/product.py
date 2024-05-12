@@ -6,6 +6,7 @@ from server.utils import format_currency
 class ProductListSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField(method_name="get_category_name")
     cover_image = serializers.SerializerMethodField()
+    is_discounted = serializers.SerializerMethodField()
     price = serializers.SerializerMethodField()
 
     class Meta:
@@ -16,8 +17,16 @@ class ProductListSerializer(serializers.ModelSerializer):
             "rating",
             "price",
             "product_name",
+            "product_price",
+            "discount_percentage",
+            "is_discounted",
             "category_name",
         ]
+
+    def get_is_discounted(self, object):
+        if object.discount_percentage > 0:
+            return True
+        return False
 
     def get_category_name(self, object):
         if object.category:

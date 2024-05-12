@@ -26,7 +26,7 @@ class ProductsListPagination(PageNumberPagination):
 
 # Common Pagination
 class ListQuerySetPagination(PageNumberPagination):
-    def __init__(self, page_size=20) -> None:
+    def __init__(self, page_size=10) -> None:
         self.page_size = page_size
         super().__init__()
 
