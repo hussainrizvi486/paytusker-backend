@@ -6,6 +6,7 @@ from .product import Product
 from .customer import Customer
 from server.utils import generate_snf_id
 from apps.accounts.models import Address
+from django.core.serializers import serialize
 
 
 class Order(BaseModel):
@@ -54,11 +55,20 @@ class Order(BaseModel):
         self.grand_total = sum(item.amount for item in self.order_items.all())
         super().save(*args, **kwargs)
 
-    # def get_order_items(self):
-    #     serailized_data = []
-    #     orderitems_queryset: List[OrderItems] = self.order_items_set.all()
-    #     for row in orderitems_queryset:
-    #         serailized_data.append({"product_id": row.item.id, "qty": row.qty, })
+    def get_order_items(self):
+        serailized_data = []
+        orderitems_queryset = OrderItems.objects.filter(order=self)
+        for order_item in orderitems_queryset:
+            serailized_data.append(
+                {
+                    "product_name": order_item.item.product_name,
+                    "product_id": order_item.item.id,
+                    "rate": order_item.rate,
+                    "amount": order_item.amount,
+                    "qty": order_item.qty,
+                }
+            )
+        return serailized_data
 
 
 class OrderItems(BaseModel):

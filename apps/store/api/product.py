@@ -68,7 +68,6 @@ class ProductsApi(ViewSet):
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
-
         if not product_id:
             return Response(
                 data={"message": "Please give the product"},
@@ -294,8 +293,12 @@ class ProductsApi(ViewSet):
         return attributes
 
 
+import time
+
+
 class SearchProductsApi(APIView):
     def get(self, request):
+        st_time = time.time()
         query = request.GET.get("query")
         category_id = request.GET.get("category")
         filters = {}
@@ -319,19 +322,17 @@ class SearchProductsApi(APIView):
             products_queryset = (
                 Product.objects.list_queryset()
                 .annotate(rank=SearchRank(vector=vector, query=search_query))
-                .exclude(item_type="002")
                 .filter(rank__gte=0.001)
                 .order_by("-rank")
             )
 
         elif category_id:
-            products_queryset = (
-                Product.objects.list_queryset()
-                .filter(category__id=category_id)
-                .exclude(item_type="002")
+            products_queryset = Product.objects.list_queryset().filter(
+                category__id=category_id
             )
 
         if products_queryset:
+            print("Query processing time: ", time.time() - st_time)
             filters_attributes = self.get_search_product_attributes(products_queryset)
             attributes_filter: dict = filters.get("attributes")
             if attributes_filter:
@@ -343,8 +344,9 @@ class SearchProductsApi(APIView):
                         )
 
             if filters.get("category_id"):
-                category = Category.objects.get(id=filters.get("category_id"))
-                products_queryset = products_queryset.filter(category=category)
+                products_queryset = products_queryset.filter(
+                    category__id=filters.get("category_id")
+                )
 
             if filters.get("min_price"):
                 products_queryset = products_queryset.filter(
@@ -360,12 +362,12 @@ class SearchProductsApi(APIView):
                     price__gte=Decimal(filters.get("rating"))
                 )
 
+            print("Query and filters processing time:", time.time() - st_time)
             if products_queryset:
                 products_res = pagniator.paginate_queryset(products_queryset, request)
                 products_data = ProductListSerializer(
                     products_res, many=True, context={"request": request}
                 )
-
                 return pagniator.get_paginated_response(
                     products_data.data, {"filters_attributes": filters_attributes}
                 )
