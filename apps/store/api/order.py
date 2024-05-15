@@ -2,6 +2,7 @@ import json
 import stripe
 import math
 from decimal import Decimal
+from datetime import datetime
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.viewsets import ViewSet
@@ -134,6 +135,7 @@ class OrderApi(ViewSet):
             "005": {"status": "Deliverd", "color": "#0eca05"},
             "006": {"status": "Cancelled", "color": "#ff0000"},
         }
+
         if orders_qs:
             orders_qs = paginator.paginate_queryset(orders_qs, request)
             for order in orders_qs:
@@ -142,7 +144,11 @@ class OrderApi(ViewSet):
                     "grand_total": order.grand_total,
                     "total_qty": order.total_qty,
                     "order_date": order.order_date,
-                    "delivery_date": order.delivery_date,
+                    "delivery_date": (
+                        order.delivery_date.strftime("%m-%d-%y")
+                        if hasattr(order, "delivery_date")
+                        else None
+                    ),
                     "payment_status": order.payment_status,
                     "payment_method": order.payment_method,
                     "delivery_status": order.delivery_status,

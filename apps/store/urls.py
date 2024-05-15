@@ -35,10 +35,7 @@ urlpatterns = [
         ProductsApi.as_view({"get": "get_home_page_products"}),
     ),
     path("product/search", SearchProductsApi.as_view()),
-    path(
-        "category/get",
-        ProductCategory.as_view({"get": "get_categories"}),
-    ),
+    path("category/get",ProductCategory.as_view({"get": "get_categories"}),),
     # path("product/create", ProductsApi.as_view({"post": "create_product"})),
     # path("product/update", ProductsApi.as_view({"post": "update_product"})),
     # Cart Routes
