@@ -24,6 +24,7 @@ from django.conf import settings
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("apps.accounts.urls")),
-    path("api/", include("apps.store.urls")),
+    path("", include("apps.store.urls")),
+    # path("webhooks/", include("apps.store.webhooks.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
