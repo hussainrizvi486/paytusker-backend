@@ -3,7 +3,7 @@ from .api.product import ProductsApi, SearchProductsApi, ProductCategory
 from .api.cart import CartApi
 from .api.order import OrderApi, CustomerFunctions, order_payment_confirm_webhook
 from .erpnext.apis import ERPNextProductsApi, ERPNextItemGroupsApi
-from .webhooks import webhooks_paths
+from .webhooks import webhooks_paths, OrderWebhooks
 
 erpnext_api_urls = [
     path(
@@ -62,8 +62,11 @@ urlpatterns = [
         "api/customer/reviews/pending",
         CustomerFunctions.as_view({"get": "to_review_items"}),
     ),
+    path(
+        "webhooks/order/update-status",
+        OrderWebhooks.as_view({"post": "update_order_status"}),
+    ),
 ]
 
 
 urlpatterns.extend(erpnext_api_urls)
-urlpatterns.extend(webhooks_paths)
