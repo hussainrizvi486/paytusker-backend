@@ -78,7 +78,7 @@ class OrderApi(ViewSet):
                         "product_data": {
                             "name": item.item.product_name,
                             "images": [
-                                f"https://crm.paytusker.com{item.item.cover_image.url or ""}"
+                                f"https://crm.paytusker.com{item.item.cover_image.url}"
                             ],
                         },
                     },
