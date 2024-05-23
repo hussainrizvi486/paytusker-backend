@@ -92,9 +92,9 @@ class OrderItems(BaseModel):
         return self.order.order_id
 
     def save(self, *args, **kwargs):
-        if not self.id:
-            self.rate = self.item.price
-            self.amount = self.rate * self.qty
+        # if not self.id:
+        self.rate = self.item.price
+        self.amount = self.rate * self.qty
         super().save(*args, **kwargs)
 
 
