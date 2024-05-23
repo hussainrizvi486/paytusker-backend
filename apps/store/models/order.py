@@ -95,7 +95,8 @@ class OrderItems(BaseModel):
         if not self.id:
             self.rate = self.item.price
             self.amount = self.rate * self.qty
-            super().save(*args, **kwargs)
+
+        super().save(*args, **kwargs)
 
 
 class OrderReview(BaseModel):
