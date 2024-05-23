@@ -83,6 +83,8 @@ def update_products():
 
 
 ID_GEN = SnowflakeGenerator(42)
+
+
 def generate_snf_id():
     id = next(ID_GEN)
     return id
@@ -99,3 +101,11 @@ def format_currency(value):
     formatted_value = f"{currency_symbol}{formatted_value}"
 
     return formatted_value
+
+
+def load_request_body(data):
+    body: dict = data
+    try:
+        return json.loads(body)
+    except Exception:
+        return body

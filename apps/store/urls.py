@@ -3,22 +3,23 @@ from .api.product import ProductsApi, SearchProductsApi, ProductCategory
 from .api.cart import CartApi
 from .api.order import OrderApi, CustomerFunctions, order_payment_confirm_webhook
 from .erpnext.apis import ERPNextProductsApi, ERPNextItemGroupsApi
+from .webhooks import webhooks_paths
 
 erpnext_api_urls = [
     path(
-        "erpnext/product/sync",
+        "api/erpnext/product/sync",
         ERPNextProductsApi.as_view({"post": "sync_product"}),
     ),
     path(
-        "erpnext/product/delete",
+        "api/erpnext/product/delete",
         ERPNextProductsApi.as_view({"post": "remove_product"}),
     ),
     path(
-        "erpnext/category/sync",
+        "api/erpnext/category/sync",
         ERPNextItemGroupsApi.as_view({"post": "sync_category"}),
     ),
     path(
-        "erpnext/category/delete",
+        "api/erpnext/category/delete",
         ERPNextItemGroupsApi.as_view({"post": "remove_category"}),
     ),
 ]
@@ -27,38 +28,42 @@ erpnext_api_urls = [
 urlpatterns = [
     path("webhooks/payment/orders", order_payment_confirm_webhook),
     path(
-        "product/details",
+        "api/product/details",
         ProductsApi.as_view({"get": "get_product_detail"}),
     ),
     path(
-        "product/home",
+        "api/product/home",
         ProductsApi.as_view({"get": "get_home_page_products"}),
     ),
-    path("product/search", SearchProductsApi.as_view()),
-    path("category/get",ProductCategory.as_view({"get": "get_categories"}),),
+    path("api/product/search", SearchProductsApi.as_view()),
+    path(
+        "api/category/get",
+        ProductCategory.as_view({"get": "get_categories"}),
+    ),
     # path("product/create", ProductsApi.as_view({"post": "create_product"})),
     # path("product/update", ProductsApi.as_view({"post": "update_product"})),
     # Cart Routes
-    path("customer/cart/add", CartApi.as_view({"post": "add_to_cart"})),
-    path("customer/cart/get", CartApi.as_view({"get": "get_cart_detail"})),
-    path("customer/cart/update", CartApi.as_view({"post": "update_cart_item"})),
+    path("api/customer/cart/add", CartApi.as_view({"post": "add_to_cart"})),
+    path("api/customer/cart/get", CartApi.as_view({"get": "get_cart_detail"})),
+    path("api/customer/cart/update", CartApi.as_view({"post": "update_cart_item"})),
     # order routes
-    path("customer/order/create", OrderApi.as_view({"post": "create_order"})),
-    path("customer/order/get", OrderApi.as_view({"get": "get_customer_orders"})),
+    path("api/customer/order/create", OrderApi.as_view({"post": "create_order"})),
+    path("api/customer/order/get", OrderApi.as_view({"get": "get_customer_orders"})),
     # reviews
     path(
-        "customer/reviews/add",
+        "api/customer/reviews/add",
         CustomerFunctions.as_view({"post": "add_order_review"}),
     ),
     path(
-        "customer/reviews/get",
+        "api/customer/reviews/get",
         CustomerFunctions.as_view({"get": "get_order_review"}),
     ),
     path(
-        "customer/reviews/pending",
+        "api/customer/reviews/pending",
         CustomerFunctions.as_view({"get": "to_review_items"}),
     ),
 ]
 
 
 urlpatterns.extend(erpnext_api_urls)
+urlpatterns.extend(webhooks_paths)

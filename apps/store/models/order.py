@@ -9,6 +9,9 @@ from apps.accounts.models import Address
 from django.core.serializers import serialize
 
 
+validated_status = ["001", "002", "003", "004", "005", "006"]
+
+
 class Order(BaseModel):
     order_id = models.CharField(
         default=generate_snf_id, unique=True, max_length=999, editable=True
@@ -89,9 +92,10 @@ class OrderItems(BaseModel):
         return self.order.order_id
 
     def save(self, *args, **kwargs):
-        self.rate = self.item.price
-        self.amount = self.rate * self.qty
-        super().save(*args, **kwargs)
+        if not self.id:
+            self.rate = self.item.price
+            self.amount = self.rate * self.qty
+            super().save(*args, **kwargs)
 
 
 class OrderReview(BaseModel):
