@@ -29,6 +29,8 @@ def sync_order(order_queryset: Order):
     try:
         order_items = get_order_items(order_queryset)
         body = {
+            "order_id": order_queryset.order_id,
+            "server_id": order_queryset.id,
             "customer": order_queryset.customer.customer_name,
             "phone_number": order_queryset.customer.user.phone_number,
             "order_date": order_queryset.order_date.strftime("%Y-%m-%d"),
