@@ -77,6 +77,9 @@ class OrderApi(ViewSet):
                         "unit_amount": math.ceil(item.item.price * 100),
                         "product_data": {
                             "name": item.item.product_name,
+                            "images": [
+                                f"https://crm.paytusker.com{item.item.cover_image.url or ""}"
+                            ],
                         },
                     },
                     "quantity": int(item.qty),
@@ -122,7 +125,6 @@ class OrderApi(ViewSet):
         paginator = ListQuerySetPagination(page_size=5)
         customer = get_customer(request.user)
         orders_qs = Order.objects.filter(customer=customer).order_by("-creation")
-        print(len(orders_qs))
         if request.GET.get("order_status"):
             orders_qs = orders_qs.filter(order_status=request.GET.get("order_status"))
 
