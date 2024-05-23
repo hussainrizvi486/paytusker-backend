@@ -145,7 +145,7 @@ class OrderApi(ViewSet):
                     "total_qty": order.total_qty,
                     "order_date": order.order_date,
                     "delivery_date": (
-                        order.delivery_date.strftime("%m-%d-%y")
+                        order.delivery_date.strftime("%m-%d-%Y")
                         if hasattr(order, "delivery_date")
                         else None
                     ),
