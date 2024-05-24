@@ -68,6 +68,7 @@ class ERPNextProductsApi(ViewSet):
                 "message": f"Product sync successfully!",
                 "product_id": product.id,
                 "product_name": product.product_name,
+                "website_price": product.price,
             }
         )
 

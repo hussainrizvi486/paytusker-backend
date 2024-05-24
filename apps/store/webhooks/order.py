@@ -8,7 +8,6 @@ from django.shortcuts import get_object_or_404
 
 class OrderWebhooks(ViewSet):
     def update_order_status(self, request):
-        print("view")
         data = load_request_body(request.data)
         order_id = data.get("order_id")
         order_status = data.get("order_status")

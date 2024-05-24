@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import Avg
-from typing import List
+from datetime import timedelta
 from .base import BaseModel
 from .product import Product
 from .customer import Customer
@@ -18,7 +18,7 @@ class Order(BaseModel):
     )
     customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
     order_date = models.DateField(auto_now_add=True)
-    delivery_date = models.DateField(auto_now_add=True)
+    delivery_date = models.DateField(null=True, blank=True)
     order_status = models.CharField(
         choices=(
             ("001", "Order Pending"),
@@ -56,6 +56,8 @@ class Order(BaseModel):
     def save(self, *args, **kwargs):
         self.total_qty = sum(item.qty for item in self.order_items.all())
         self.grand_total = sum(item.amount for item in self.order_items.all())
+        if not self.delivery_date:
+            self.delivery_date = self.order_date + timedelta(days=10)
         super().save(*args, **kwargs)
 
     def get_order_items(self):
