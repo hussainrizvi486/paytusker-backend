@@ -365,7 +365,11 @@ def order_payment_confirm_webhook(request):
                     log1.save()
 
         except Exception as e:
-            return JsonResponse({"error": str(e)})
+            import traceback
+
+            return JsonResponse(
+                {"error": str(e), "trace back": str(traceback.format_exc())}
+            )
 
         return HttpResponse(status=200)
 
