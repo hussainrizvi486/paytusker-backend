@@ -315,6 +315,9 @@ class CustomerFunctions(ViewSet):
         return Response(data={"reviews": None})
 
 
+from django.http import JsonResponse
+
+
 @csrf_exempt
 def order_payment_confirm_webhook(request):
     payload = request.body
@@ -352,7 +355,7 @@ def order_payment_confirm_webhook(request):
                 sync_order(order_queryset)
 
         except Exception as e:
-            return HttpResponse(status=400)
+            return JsonResponse({"error": str(e)})
 
         return HttpResponse(status=200)
 
