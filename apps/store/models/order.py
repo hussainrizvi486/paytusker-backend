@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import Avg
-from datetime import timedelta
+from datetime import timedelta, datetime
 from .base import BaseModel
 from .product import Product
 from .customer import Customer
@@ -56,8 +56,10 @@ class Order(BaseModel):
     def save(self, *args, **kwargs):
         self.total_qty = sum(item.qty for item in self.order_items.all())
         self.grand_total = sum(item.amount for item in self.order_items.all())
-        if not self.delivery_date:
+        if not self.delivery_date and self.order_date:
             self.delivery_date = self.order_date + timedelta(days=10)
+        elif not self.delivery_date:
+            self.delivery_date = datetime.now() + timedelta(days=10)
         super().save(*args, **kwargs)
 
     def get_order_items(self):
