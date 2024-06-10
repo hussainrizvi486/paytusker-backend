@@ -5,6 +5,8 @@ from uuid import uuid4
 class StoreErrorLogs(models.Model):
     log = models.TextField()
 
+    def __str__(self) -> str:
+        return self.log
 
 class BaseModel(models.Model):
     id = models.CharField(

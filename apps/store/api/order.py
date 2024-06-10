@@ -316,6 +316,7 @@ class CustomerFunctions(ViewSet):
 
 
 from django.http import JsonResponse
+from apps.store.models import StoreErrorLogs
 
 
 @csrf_exempt
@@ -326,6 +327,9 @@ def order_payment_confirm_webhook(request):
     if sig_header:
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+            log = StoreErrorLogs.objects.create(log="stripe Event created")
+            log.save()
+
             if event.type == "checkout.session.completed":
                 metadata = event["data"]["object"]["metadata"]
                 order_items = metadata["items"]
@@ -334,6 +338,7 @@ def order_payment_confirm_webhook(request):
                 payment_method = metadata["payment_method"]
                 delivery_address = Address.objects.get(id=metadata["delivery_address"])
                 customer = Customer.objects.get(id=metadata["customer_id"])
+
                 order_queryset = Order.objects.create(
                     delivery_address=delivery_address,
                     payment_method=payment_method,
@@ -351,8 +356,13 @@ def order_payment_confirm_webhook(request):
                     )
 
                 order_queryset.save()
+
                 Cart.objects.filter(customer=order_queryset.customer).delete()
-                sync_order(order_queryset)
+                try:
+                    sync_order(order_queryset)
+                except Exception as e:
+                    log1 = StoreErrorLogs.objects.create(log=str(e))
+                    log1.save()
 
         except Exception as e:
             return JsonResponse({"error": str(e)})
