@@ -1,1 +1,5 @@
-from .product import ProductListSerializer, CategoryListSerializer
+from .product import (
+    ProductListSerializer,
+    CategoryListSerializer,
+    SellerProductListingSerializer,
+)

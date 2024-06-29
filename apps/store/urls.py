@@ -1,9 +1,11 @@
 from django.urls import path
-from .api.product import ProductsApi, SearchProductsApi, ProductCategory
+from .api import SearchProductsApi, ListSellerProducts
+from .api.product import ProductsApi, ProductCategory
 from .api.cart import CartApi
 from .api.order import OrderApi, CustomerFunctions, order_payment_confirm_webhook
 from .erpnext.apis import ERPNextProductsApi, ERPNextItemGroupsApi
 from .webhooks import webhooks_paths, OrderWebhooks
+from apps.store.api import CategoryList, ProductTemplateList
 
 erpnext_api_urls = [
     path(
@@ -25,7 +27,14 @@ erpnext_api_urls = [
 ]
 
 
+seller_apis_urls = [
+    path("api/seller/product/list", ListSellerProducts.as_view()),
+]
+
+
 urlpatterns = [
+    path("api/product/template/list", ProductTemplateList.as_view()),
+    path("api/category/list", CategoryList.as_view()),
     path("webhooks/payment/orders", order_payment_confirm_webhook),
     path(
         "api/product/details",
@@ -70,3 +79,4 @@ urlpatterns = [
 
 
 urlpatterns.extend(erpnext_api_urls)
+urlpatterns.extend(seller_apis_urls)

@@ -44,15 +44,42 @@ class ProductListSerializer(serializers.ModelSerializer):
         return format_currency(object.price or 0)
 
 
-class CategoryListSerializer(serializers.ModelSerializer):
-    # image = serializers.SerializerMethodField()
+class AmendProductSerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
 
+
+class CategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "image"]
 
-    def get_image(self, object):
-        if self.context.get("request") and object.image:
-            return self.context.get("request").build_absolute_uri(object.image.url)
+    def get_image(self, obj):
+        request = self.context.get("request")
+        if request and obj.image:
+            return request.build_absolute_uri(obj.image.url)
 
-        return object.image.url or None
+        return obj.image.url or None
+
+
+class SellerProductListingSerializer(serializers.ModelSerializer):
+    category = CategoryListSerializer()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "cover_image",
+            "product_name",
+            "category",
+            "net_price",
+            "stock",
+            "disabled",
+            "is_digital",
+            "item_type",
+        ]
+
+    def get_cover_image(self, obj):
+        request = self.context.get("request")
+        if request and obj.cover_image:
+            return request.build_absolute_uri(obj.cover_image.url)

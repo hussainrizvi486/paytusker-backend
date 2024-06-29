@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.store.models.base import ModelMedia, StoreErrorLogs
+from apps.store.models.base import StoreErrorLogs
 from apps.store.models.product import (
     Product,
     ProductMedia,
@@ -7,7 +7,7 @@ from apps.store.models.product import (
     ProductCategoryCommission,
     ProductDiscount,
 )
-from apps.store.models.common import Category
+from apps.store.models.common import Category, ModelMedia
 from apps.store.models.customer import Customer, Cart, CartItem
 from apps.store.models.order import Order, OrderItems, OrderReview
 

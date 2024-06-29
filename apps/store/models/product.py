@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from .base import BaseModel
 from .common import Category
+from .seller import Seller
 
 
 class ProductManager(models.Manager):
@@ -47,18 +48,16 @@ class Product(BaseModel):
     product_price = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
-
     price = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
     commission_rate = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
-
     discount_percentage = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
-
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE, null=True, blank=True)
     objects = ProductManager()
 
     def __str__(self) -> str:
@@ -67,18 +66,12 @@ class Product(BaseModel):
     def get_product_images(self, request=None):
         query_set = ProductMedia.objects.filter(product=self)
         images_list = []
-        if query_set:
-            if request:
-                images_list = [
-                    request.build_absolute_uri(row.file.url) for row in query_set
-                ]
-                if self.cover_image:
-                    images_list.insert(
-                        0, request.build_absolute_uri(self.cover_image.url)
-                    )
-            else:
-                images_list = [row.file.url for row in query_set]
-                images_list.insert(0, self.cover_image.url)
+        if hasattr(self, "productmedia_set"):
+            images_list = [row.file.url for row in self.productmedia_set.all()]
+
+        if self.cover_image:
+            images_list.insert(0, self.cover_image.url)
+
         return images_list
 
     def save(self, *args, **kwargs) -> None:
@@ -89,7 +82,6 @@ class Product(BaseModel):
         self.price = self.net_price + (self.commission_rate / 100 * self.net_price)
         self.product_price = self.price
         self.price = self.price - ((self.price / 100) * self.discount_percentage)
-
         return super().save(*args, **kwargs)
 
 
@@ -128,7 +120,6 @@ class ProductDiscount(BaseModel):
 
     def save(self, *args, **kwargs) -> None:
         self.product.discount_percentage = self.discount_percentage
-
         self.product.save()
         return super().save(*args, **kwargs)
 

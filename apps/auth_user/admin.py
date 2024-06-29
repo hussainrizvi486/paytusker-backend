@@ -1,15 +1,31 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Address
+from .models import User, UserRoles, LoginHistory
 
 
-admin.site.register(Address)
+@admin.register(UserRoles)
+class UserRoleAdmin(admin.ModelAdmin):
+    def __init__(self, model: type, admin_site: admin.AdminSite | None) -> None:
+        super().__init__(model, admin_site)
+        self.opts.verbose_name_plural = "User Roles"
+
+
+@admin.register(LoginHistory)
+class LoginHistoryAdmin(admin.ModelAdmin):
+    def __init__(self, model: type, admin_site: admin.AdminSite | None) -> None:
+        super().__init__(model, admin_site)
+        self.opts.verbose_name_plural = "User Login History"
 
 
 @admin.register(User)
 class UserAdminView(UserAdmin):
-    list_display = ["email", "username", "phone_number"]
-    list_filter = ["date_joined"]
+    def __init__(self, model: type, admin_site: admin.AdminSite | None) -> None:
+        super().__init__(model, admin_site)
+        self.opts.verbose_name_plural = "User"
+
+    list_display = ["email", "username", "phone_number", "id"]
+    list_filter = ["date_joined", "username", "phone_number", "email"]
+    ordering = ["-date_joined"]
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),

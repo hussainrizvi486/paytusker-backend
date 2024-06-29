@@ -23,8 +23,6 @@ class ERPNextProductsApi(ViewSet):
         product_object: dict = validated_product_data.get("product_object")
         product_media_object: dict = validated_product_data.get("product_media_object")
 
-        print(product_object)
-
         product_id = validated_product_data.get("product_id")
         variants_object = None
         if validated_product_data.get("variants_object"):

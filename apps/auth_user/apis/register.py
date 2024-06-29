@@ -1,12 +1,10 @@
-from rest_framework.views import APIView
-from apps.accounts.models import User
-from django.core.validators import validate_email
-from django.http import HttpResponseBadRequest
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, views
+
+from ..models import User
 
 
-class RegisterUser(APIView):
+class RegisterUser(views.APIView):
     def post(self, request):
         user_object: dict = request.data
         if not user_object:
@@ -26,10 +24,6 @@ class RegisterUser(APIView):
                 return Response(
                     f"{field} is missing.", status=status.HTTP_403_FORBIDDEN
                 )
-
-        # for field in user_object.keys():
-        #     if field not in required_fields:
-
         email_exists = User.objects.filter(email=user_object.get("email")).exists()
         if email_exists:
             return Response(

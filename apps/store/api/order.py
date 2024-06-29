@@ -13,9 +13,9 @@ from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart, Customer
 from apps.store.models.product import Product
-from apps.store.models.base import ModelMedia
+from apps.store.models import ModelMedia
 from apps.store.permissions import IsCustomerUser
-from apps.accounts.models import Address
+# from apps.accounts.models import Address
 from apps.store.pagination import ListQuerySetPagination
 from apps.store.erpnext import sync_order
 from server import settings
@@ -32,7 +32,6 @@ class OrderApi(ViewSet):
             "card",
             "klarna",
         ]
-
         data = request.data
         customer = get_customer(user=request.user)
         payment_method = data.get("payment_method")
@@ -48,28 +47,24 @@ class OrderApi(ViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        delivery_address = Address.objects.get(id=data.get("delivery_address"))
+        # delivery_address = Address.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
         cart_items = CartItem.objects.all().filter(cart=customer_cart)
 
-        if not self.validate_customer_origin(delivery_address, cart_items):
-            return Response(
-                data={
-                    "message": "Only customers based in the United States can purchase physical products or enter a valid US address."
-                },
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
+        # if not self.validate_customer_origin(delivery_address, cart_items):
+            # return Response(
+            #     data={
+            #         "message": "Only customers based in the United States can purchase physical products or enter a valid US address."
+            #     },
+            #     status=status.HTTP_406_NOT_ACCEPTABLE,
+            # )
 
         items_data = []
         stripe_line_items = []
 
         for item in cart_items:
-            items_data.append(
-                {
-                    "id": item.item.id,
-                    "qty": float(item.qty),
-                }
-            )
+            items_data.append({"id": item.item.id, "qty": float(item.qty)})
+
             stripe_line_items.append(
                 {
                     "price_data": {
@@ -92,7 +87,7 @@ class OrderApi(ViewSet):
             metadata={
                 "items": json.dumps(items_data),
                 "payment_method": payment_method,
-                "delivery_address": delivery_address.id,
+                # "delivery_address": delivery_address.id,
                 "customer_id": customer.id,
             },
             mode="payment",
@@ -329,10 +324,10 @@ def order_payment_confirm_webhook(request):
                 order_items = json.loads(order_items)
 
                 payment_method = metadata["payment_method"]
-                delivery_address = Address.objects.get(id=metadata["delivery_address"])
+                # delivery_address = Address.objects.get(id=metadata["delivery_address"])
                 customer = Customer.objects.get(id=metadata["customer_id"])
                 order_queryset = Order.objects.create(
-                    delivery_address=delivery_address,
+                    # delivery_address=delivery_address,
                     payment_method=payment_method,
                     order_status="001",
                     payment_status=True,

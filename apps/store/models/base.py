@@ -1,5 +1,6 @@
 from django.db import models
 from uuid import uuid4
+from apps.auth_user.models import User
 
 
 class StoreErrorLogs(models.Model):
@@ -17,7 +18,8 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class ModelMedia(models.Model):
-    model_name = models.CharField(max_length=999)
-    field_id = models.CharField(max_length=999)
-    file = models.FileField()
+class BaseProfile(BaseModel):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True

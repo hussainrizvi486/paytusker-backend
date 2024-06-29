@@ -1,15 +1,24 @@
 from django.db import models
 from django.db.models import Avg
 from datetime import timedelta
-from .base import BaseModel
-from .product import Product
+# from .base import 
+from .product import Product, BaseModel
+
 from .customer import Customer
 from server.utils import generate_snf_id
-from apps.accounts.models import Address
+# from apps.auth_user.models import Address
 from django.core.serializers import serialize
 
 
 validated_status = ["001", "002", "003", "004", "005", "006"]
+ORDER_STATUS = (
+    ("001", "Order Pending"),
+    ("002", "Order Confirmed"),
+    ("003", "In Process"),
+    ("004", "Shipping"),
+    ("005", "Delivered"),
+    ("006", "Cancelled"),
+)
 
 
 class Order(BaseModel):
@@ -20,14 +29,7 @@ class Order(BaseModel):
     order_date = models.DateField(auto_now_add=True)
     delivery_date = models.DateField(null=True, blank=True)
     order_status = models.CharField(
-        choices=(
-            ("001", "Order Pending"),
-            ("002", "Order Confirmed"),
-            ("003", "In Process"),
-            ("004", "Shipping"),
-            ("005", "Delivered"),
-            ("006", "Cancelled"),
-        ),
+        choices=ORDER_STATUS,
         null=True,
         blank=True,
         max_length=999,
@@ -46,9 +48,9 @@ class Order(BaseModel):
         decimal_places=2, max_digits=12, null=True, blank=True
     )
 
-    delivery_address = models.ForeignKey(
-        Address, null=True, blank=True, on_delete=models.SET_NULL
-    )
+    # delivery_address = models.ForeignKey(
+    #     Address, null=True, blank=True, on_delete=models.SET_NULL
+    # )
 
     def __str__(self) -> str:
         return f"{self.customer} {self.order_id}"
@@ -89,12 +91,17 @@ class OrderItems(BaseModel):
     rate = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     has_review = models.BooleanField(default=False)
+    status = models.CharField(
+        choices=ORDER_STATUS,
+        null=True,
+        blank=True,
+        max_length=999,
+    )
 
     def __str__(self) -> str:
         return self.order.order_id
 
     def save(self, *args, **kwargs):
-        # if not self.id:
         self.rate = self.item.price
         self.amount = self.rate * self.qty
         super().save(*args, **kwargs)
