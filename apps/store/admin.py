@@ -1,11 +1,12 @@
 from django.contrib import admin
-from apps.store.models.base import StoreErrorLogs
+from apps.store.models.base import StoreErrorLogs, UserAddress
 from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
     ProductCategoryCommission,
     ProductDiscount,
+    Seller,
 )
 from apps.store.models.common import Category, ModelMedia
 from apps.store.models.customer import Customer, Cart, CartItem
@@ -42,11 +43,10 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "id"]
 
 
-class OrderItemInline(admin.TabularInline):
-    model = OrderItems
-
-
 class OrderAdmin(BaseModelAdmin):
+    class OrderItemInline(admin.TabularInline):
+        model = OrderItems
+
     list_filter = ["payment_status", "order_status"]
     list_display = ["order_id", "grand_total", "order_status", "order_date"]
     inlines = [OrderItemInline]
@@ -64,3 +64,5 @@ admin.site.register(CartItem)
 admin.site.register(OrderReview)
 admin.site.register(ModelMedia)
 admin.site.register(StoreErrorLogs)
+admin.site.register(Seller)
+admin.site.register(UserAddress)

@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status, views
 
-from ..models import User
+from ..models import User, UserRoles
 
 
 class RegisterUser(views.APIView):
@@ -49,6 +49,7 @@ class RegisterUser(views.APIView):
         )
 
         user.save()
+        UserRoles.objects.create(user=user, role="customer")
         from apps.store.models.customer import Customer
 
         if user:

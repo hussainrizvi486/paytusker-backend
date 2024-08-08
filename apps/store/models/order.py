@@ -1,11 +1,13 @@
 from django.db import models
 from django.db.models import Avg
 from datetime import timedelta
-# from .base import 
+
+# from .base import
 from .product import Product, BaseModel
 
 from .customer import Customer
 from server.utils import generate_snf_id
+
 # from apps.auth_user.models import Address
 from django.core.serializers import serialize
 
@@ -22,6 +24,14 @@ ORDER_STATUS = (
 
 
 class Order(BaseModel):
+    class StatusChoices(models.TextChoices):
+        ORDER_PENDING = "001", "Order Pending"
+        ORDER_CONFIRMED = "002", "Order Confirmed"
+        IN_PROCESS = "003", "In Process"
+        SHIPPING = "004", "Shipping"
+        DELIVERED = "005", "Delivered"
+        CANCELLED = "006", "Cancelled"
+
     order_id = models.CharField(
         default=generate_snf_id, unique=True, max_length=999, editable=True
     )
@@ -29,7 +39,7 @@ class Order(BaseModel):
     order_date = models.DateField(auto_now_add=True)
     delivery_date = models.DateField(null=True, blank=True)
     order_status = models.CharField(
-        choices=ORDER_STATUS,
+        choices=StatusChoices,
         null=True,
         blank=True,
         max_length=999,
@@ -55,10 +65,15 @@ class Order(BaseModel):
     def __str__(self) -> str:
         return f"{self.customer} {self.order_id}"
 
+    def calulate_validate_total(self):
+        if hasattr(self, "order_items"):
+            self.total_qty = sum(item.qty for item in self.order_items.all())
+            self.grand_total = sum(item.amount for item in self.order_items.all())
+
     def save(self, *args, **kwargs):
-        self.total_qty = sum(item.qty for item in self.order_items.all())
-        self.grand_total = sum(item.amount for item in self.order_items.all())
-        if not self.delivery_date:
+        self.calulate_validate_total()
+
+        if not self.delivery_date and self.order_date:
             self.delivery_date = self.order_date + timedelta(days=10)
         super().save(*args, **kwargs)
 
@@ -102,7 +117,8 @@ class OrderItems(BaseModel):
         return self.order.order_id
 
     def save(self, *args, **kwargs):
-        self.rate = self.item.price
+        if self.rate:
+            self.rate = self.item.price
         self.amount = self.rate * self.qty
         super().save(*args, **kwargs)
 

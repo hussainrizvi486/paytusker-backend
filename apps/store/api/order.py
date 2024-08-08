@@ -13,8 +13,9 @@ from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart, Customer
 from apps.store.models.product import Product
-from apps.store.models import ModelMedia
+from apps.store.models import ModelMedia, UserAddress
 from apps.store.permissions import IsCustomerUser
+
 # from apps.accounts.models import Address
 from apps.store.pagination import ListQuerySetPagination
 from apps.store.erpnext import sync_order
@@ -27,19 +28,19 @@ endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 
 @permission_classes([IsCustomerUser])
 class OrderApi(ViewSet):
+    @classmethod
+    def clear_customer_cart(self, customer_id: str):
+        Cart.objects.filter(customer__id=customer_id).delete()
+
     def create_order(self, request):
         available_payment_methods = [
             "card",
             "klarna",
         ]
+
         data = request.data
         customer = get_customer(user=request.user)
         payment_method = data.get("payment_method")
-
-        if not customer:
-            return Response(
-                data="User is not a customer", status=status.HTTP_403_FORBIDDEN
-            )
 
         if payment_method not in available_payment_methods:
             return Response(
@@ -47,25 +48,32 @@ class OrderApi(ViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # delivery_address = Address.objects.get(id=data.get("delivery_address"))
+        delivery_address = UserAddress.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
-        cart_items = CartItem.objects.all().filter(cart=customer_cart)
+        cart_items = CartItem.objects.prefetch_related("item").filter(
+            cart=customer_cart
+        )
 
-        # if not self.validate_customer_origin(delivery_address, cart_items):
-            # return Response(
-            #     data={
-            #         "message": "Only customers based in the United States can purchase physical products or enter a valid US address."
-            #     },
-            #     status=status.HTTP_406_NOT_ACCEPTABLE,
-            # )
+        if not self.validate_customer_origin(delivery_address, cart_items):
+            return Response(
+                data={
+                    "message": "Only customers based in the United States can purchase physical products or enter a valid US address."
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
 
-        items_data = []
-        stripe_line_items = []
-
+        ordered_items = []
+        line_items = []
         for item in cart_items:
-            items_data.append({"id": item.item.id, "qty": float(item.qty)})
+            ordered_items.append(
+                {
+                    "id": item.item.id,
+                    "qty": float(item.qty),
+                    "rate": float(item.item.price),
+                }
+            )
 
-            stripe_line_items.append(
+            line_items.append(
                 {
                     "price_data": {
                         "currency": "usd",
@@ -83,11 +91,11 @@ class OrderApi(ViewSet):
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=[payment_method],
-            line_items=stripe_line_items,
+            line_items=line_items,
             metadata={
-                "items": json.dumps(items_data),
+                "items": json.dumps(ordered_items),
                 "payment_method": payment_method,
-                # "delivery_address": delivery_address.id,
+                "delivery_address": delivery_address.id,
                 "customer_id": customer.id,
             },
             mode="payment",
@@ -96,6 +104,7 @@ class OrderApi(ViewSet):
             billing_address_collection="auto",
         )
 
+        self.clear_customer_cart(customer.id)
         return Response(
             {
                 "checkout_session": checkout_session.id,
@@ -345,8 +354,11 @@ def order_payment_confirm_webhook(request):
                 order_queryset.save()
                 Cart.objects.filter(customer=order_queryset.customer).delete()
                 sync_order(order_queryset)
-
         except Exception as e:
+            from pprint import pprint
+            import traceback
+
+            pprint(traceback.format_exc())
             return HttpResponse(status=400)
 
         return HttpResponse(status=200)

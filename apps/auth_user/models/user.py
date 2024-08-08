@@ -37,6 +37,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, unique=False, null=False)
     phone_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    modified = models.DateTimeField(auto_now=True)
     verified = models.BooleanField(default=False)
     objects = UserManager()
 

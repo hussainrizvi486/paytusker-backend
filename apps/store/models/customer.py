@@ -33,6 +33,7 @@ class Cart(BaseModel):
 
         return super().save(*args, **kwargs)
 
+    
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)

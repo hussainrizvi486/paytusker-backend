@@ -1,0 +1,398 @@
+[
+    {
+        "model": "store.category",
+        "pk": "25c7197f-4475-47b2-af36-e9bf5064dd1e",
+        "fields": {
+            "creation": "2024-04-17T11:36:08.155Z",
+            "modified": "2024-06-14T13:40:03.387Z",
+            "name": "Women's Health",
+            "image": "EA33EB82-9589-402F-A930-C21DEFD3CB23.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "2685978f-a09a-45e8-943d-fda721416f35",
+        "fields": {
+            "creation": "2024-04-17T11:36:04.528Z",
+            "modified": "2024-04-29T20:36:05.796Z",
+            "name": "eBooks",
+            "image": "Featured-Image_Aq3Do30.webp",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "27ced19b-bc0f-415e-b5f6-1c43661bf4a5",
+        "fields": {
+            "creation": "2024-04-17T11:36:08.749Z",
+            "modified": "2024-05-05T04:00:11.856Z",
+            "name": "Young girls fashion",
+            "image": "IMG_0384720108_PsbcWdE.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "2e800a05-3e34-4f18-bd10-ab62bfc6987a",
+        "fields": {
+            "creation": "2024-04-17T11:36:07.254Z",
+            "modified": "2024-06-14T13:36:20.570Z",
+            "name": "Tablets",
+            "image": "68508F71-D945-4AF2-AE6F-8BB8C7A747F8.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "3609cafd-c22c-4ace-bc54-0b88c04033ed",
+        "fields": {
+            "creation": "2024-04-17T11:36:08.644Z",
+            "modified": "2024-05-05T04:00:37.697Z",
+            "name": "Young boys fashion",
+            "image": "IMG_0386_6YbZw7X.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "3c59c22d-25c7-45bc-b804-a72052ff90fc",
+        "fields": {
+            "creation": "2024-04-17T11:36:05.128Z",
+            "modified": "2024-05-13T00:26:13.101Z",
+            "name": "HTML Template",
+            "image": "IMG_4779.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "479d178b-3e6a-4c2f-8fe4-b73a6773ab17",
+        "fields": {
+            "creation": "2024-04-15T02:23:47.838Z",
+            "modified": "2024-04-29T20:36:03.423Z",
+            "name": "Women's Clothes",
+            "image": "IMG_3432585c8e_wCntH74.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "4840689b-6bd1-4750-9d05-28df1be7f979",
+        "fields": {
+            "creation": "2024-04-12T22:01:53.264Z",
+            "modified": "2024-06-14T13:36:40.825Z",
+            "name": "Watches",
+            "image": "48E6B7F8-0398-45E1-8720-665EAE56EC29.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "49f83908-8817-4bed-848f-82989c2e362b",
+        "fields": {
+            "creation": "2024-04-17T11:36:08.465Z",
+            "modified": "2024-05-13T00:21:56.098Z",
+            "name": "Word Press Plugin",
+            "image": "IMG_4776.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "4e4ad1dc-bf48-42b2-8cdc-b47551ecc459",
+        "fields": {
+            "creation": "2024-04-15T02:28:10.324Z",
+            "modified": "2024-05-13T00:20:59.782Z",
+            "name": "Cameras",
+            "image": "IMG_47872e1883.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "571751b1-51b5-40ff-9b1b-37cb2f8fdc36",
+        "fields": {
+            "creation": "2024-04-17T11:36:04.897Z",
+            "modified": "2024-04-29T20:36:04.979Z",
+            "name": "Health",
+            "image": "IMG_0382_OJKhteg.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "5dbc0b0d-22a2-4675-a27f-c2a8b663ff1c",
+        "fields": {
+            "creation": "2024-04-17T11:36:03.721Z",
+            "modified": "2024-05-13T00:23:24.923Z",
+            "name": "Cars & Accessories",
+            "image": "IMG_4782.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "6c146570-3c91-4d9d-8cee-251b08b0ef3a",
+        "fields": {
+            "creation": "2024-05-05T04:05:05.252Z",
+            "modified": "2024-05-13T13:45:20.428Z",
+            "name": "Headphones",
+            "image": "IMG_4774_c1rs3oE.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "6edfcbcc-fb11-4a1e-8b6a-379fcb573c96",
+        "fields": {
+            "creation": "2024-04-17T11:36:05.445Z",
+            "modified": "2024-05-05T03:46:35.641Z",
+            "name": "Men's Health",
+            "image": "IMG_0382fa1eef.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "6fc30095-bd8e-4cad-a6fe-e25dd8793c3f",
+        "fields": {
+            "creation": "2024-04-29T20:36:04.800Z",
+            "modified": "2024-04-29T20:36:04.800Z",
+            "name": "Baby",
+            "image": "IMG_3433d99cce.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "6fd02214-b55b-4c01-a244-89785cf8bcfa",
+        "fields": {
+            "creation": "2024-04-17T11:36:04.415Z",
+            "modified": "2024-06-14T13:34:34.888Z",
+            "name": "Dogs & Pets",
+            "image": "41B1EBA0-41EA-42BA-B0C1-2F7024081983.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "7c251829-9b43-4b25-9034-33c230c7d200",
+        "fields": {
+            "creation": "2024-04-17T11:36:04.285Z",
+            "modified": "2024-05-13T00:25:43.002Z",
+            "name": "Course",
+            "image": "IMG_8835.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "81ab8bac-9c8c-44b5-a824-00837118f27d",
+        "fields": {
+            "creation": "2024-04-17T11:36:05.559Z",
+            "modified": "2024-05-05T03:58:36.503Z",
+            "name": "Men's shoes",
+            "image": "IMG_0366.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "a377bff8-564a-4315-93d9-edaab28e3cf9",
+        "fields": {
+            "creation": "2024-04-17T11:36:07.855Z",
+            "modified": "2024-06-16T03:37:56.962Z",
+            "name": "Video Games",
+            "image": "13.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "aa368ecb-94e7-4d68-988c-ebcc3198f65a",
+        "fields": {
+            "creation": "2024-04-17T11:36:04.042Z",
+            "modified": "2024-05-13T00:22:33.092Z",
+            "name": "Computers",
+            "image": "IMG_4783.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "ab88547b-329a-4c28-bd12-5cf86612f45e",
+        "fields": {
+            "creation": "2024-04-17T11:36:03.938Z",
+            "modified": "2024-06-14T13:32:55.875Z",
+            "name": "Cosmetics",
+            "image": "4DF69637-993E-4E4C-9DE4-97C57B5B8F27.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "abe7baae-1357-4ea3-a351-bf636baf00ef",
+        "fields": {
+            "creation": "2024-04-17T11:36:03.494Z",
+            "modified": "2024-05-13T05:23:19.247Z",
+            "name": "Apps",
+            "image": "IMG_4778.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "af9c3d71-2bbf-4520-846b-3a4217c2e5d8",
+        "fields": {
+            "creation": "2024-04-30T08:04:51.342Z",
+            "modified": "2024-06-16T03:37:05.395Z",
+            "name": "Headphones",
+            "image": "11.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "b549b3cd-1fa6-4a7d-a03c-427f1b9e0b3d",
+        "fields": {
+            "creation": "2024-04-17T11:36:06.549Z",
+            "modified": "2024-04-29T20:36:06.538Z",
+            "name": "Recipes",
+            "image": "ebbf1386-cb3d-439a-821d-d8c5f82c8e41_wTXBMtg.jpeg",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "b7b84e3f-ddcc-41e5-8717-2c1032e8f239",
+        "fields": {
+            "creation": "2024-04-17T11:36:07.450Z",
+            "modified": "2024-06-16T03:38:56.136Z",
+            "name": "Toys",
+            "image": "12.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "cba90bb2-b4c7-48b5-9c5f-2d99bec61afd",
+        "fields": {
+            "creation": "2024-04-17T11:36:05.862Z",
+            "modified": "2024-04-29T20:36:06.204Z",
+            "name": "Music",
+            "image": "IMG_3409_Iokh7hn.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "d673e4ff-7876-468e-9370-18b9e50c1773",
+        "fields": {
+            "creation": "2024-04-17T11:36:03.833Z",
+            "modified": "2024-05-13T00:24:47.238Z",
+            "name": "Cellphones",
+            "image": "IMG_4774_bLV8p4A.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "d76ec029-ee93-4ee8-8a4f-ac3721cd9320",
+        "fields": {
+            "creation": "2024-04-17T11:36:06.842Z",
+            "modified": "2024-05-05T03:39:25.146Z",
+            "name": "Shaving",
+            "image": "IMG_0383988c2a.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "dbd7a375-e2df-48b8-b342-7ce9b563e71a",
+        "fields": {
+            "creation": "2024-04-17T11:36:05.034Z",
+            "modified": "2024-06-14T13:37:53.222Z",
+            "name": "Household Items",
+            "image": "E7BD78A0-6ABB-4757-8CBB-66CD4D6105FB.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "dcb32922-26ee-46f5-9d2d-6b50d8ae2304",
+        "fields": {
+            "creation": "2024-04-17T11:36:06.949Z",
+            "modified": "2024-05-13T00:21:38.688Z",
+            "name": "Software Programs",
+            "image": "IMG_4777.png",
+            "parent": null,
+            "digital": true
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "e56fddc1-76e4-4ff7-adfe-8509d6af68f7",
+        "fields": {
+            "creation": "2024-04-17T11:36:05.347Z",
+            "modified": "2024-06-14T13:32:29.476Z",
+            "name": "Jewelry",
+            "image": "8B252A94-568E-4CD0-BC20-3C192564CDA6.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "e70d62d8-396f-45b9-8d8c-7b2df314169a",
+        "fields": {
+            "creation": "2024-04-15T02:23:30.930Z",
+            "modified": "2024-06-14T13:35:36.629Z",
+            "name": "Men's Clothes",
+            "image": "DA7B4570-0950-4B6A-BAA3-4D301C0070EA.png",
+            "parent": null,
+            "digital": false
+        }
+    },
+    {
+        "model": "store.category",
+        "pk": "edfde123-7c7e-4d3b-a1b3-ca6475a924ef",
+        "fields": {
+            "creation": "2024-04-17T11:36:04.652Z",
+            "modified": "2024-06-14T18:18:16.998Z",
+            "name": "Gadgets",
+            "image": "EF30ED02-9F73-47B7-B34D-21055CF41320_wNx2CbK.jpeg",
+            "parent": null,
+            "digital": false
+        }
+    }
+]

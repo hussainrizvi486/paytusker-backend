@@ -103,8 +103,14 @@ def format_currency(value):
     return formatted_value
 
 
+from django.http import QueryDict
+
+
 def load_request_body(data):
-    body: dict = data
+    if type(data) == QueryDict:
+        return data.dict()
+
+    body = data
     try:
         return json.loads(body)
     except Exception:

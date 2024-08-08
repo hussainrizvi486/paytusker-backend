@@ -1,10 +1,15 @@
 from django.urls import path
-from .api import SearchProductsApi, ListSellerProducts
-from .api.product import ProductsApi, ProductCategory
+from .api import (
+    SearchProductsApi,
+    ListSellerProducts,
+    UserAddressViewSet,
+    get_upload_product_data,
+)
+from .api.product import ProductsApi, ProductCategory, ProductAPIView
 from .api.cart import CartApi
 from .api.order import OrderApi, CustomerFunctions, order_payment_confirm_webhook
 from .erpnext.apis import ERPNextProductsApi, ERPNextItemGroupsApi
-from .webhooks import webhooks_paths, OrderWebhooks
+from .webhooks import webhooks_paths, OrderWebhooks, StripeOrderPaymentWebhook
 from apps.store.api import CategoryList, ProductTemplateList
 
 erpnext_api_urls = [
@@ -34,8 +39,10 @@ seller_apis_urls = [
 
 urlpatterns = [
     path("api/product/template/list", ProductTemplateList.as_view()),
+    path("api/seller/product", ProductAPIView.as_view()),
     path("api/category/list", CategoryList.as_view()),
-    path("webhooks/payment/orders", order_payment_confirm_webhook),
+    path("webhooks/payment/orders", StripeOrderPaymentWebhook.as_view()),
+    # path("webhooks/payment/orders", order_payment_confirm_webhook),
     path(
         "api/product/details",
         ProductsApi.as_view({"get": "get_product_detail"}),
@@ -75,6 +82,8 @@ urlpatterns = [
         "webhooks/order/update-status",
         OrderWebhooks.as_view({"post": "update_order_status"}),
     ),
+    path("api/user/address", UserAddressViewSet.as_view()),
+    path("api/product/upload-details", get_upload_product_data),
 ]
 
 

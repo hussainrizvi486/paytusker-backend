@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.store.models import Product, Category
 from server.utils import format_currency
+from datetime import datetime
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -62,8 +63,40 @@ class CategoryListSerializer(serializers.ModelSerializer):
         return obj.image.url or None
 
 
+ITEM_TYPE_DICT = {
+    "001": "Normal",
+    "002": "Template",
+    "003": "Variant",
+}
+
+
+# variants
+class VariantsGroupbySerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "cover_image",
+            "product_name",
+            "category",
+            "net_price",
+            "stock",
+            "disabled",
+            "is_digital",
+            "item_type",
+            "item_type_name",
+            "creation",
+            "modified",
+        ]
+
+    ...
+
+
 class SellerProductListingSerializer(serializers.ModelSerializer):
     category = CategoryListSerializer()
+    modified = serializers.SerializerMethodField()
+    creation = serializers.SerializerMethodField()
+    item_type_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -77,9 +110,27 @@ class SellerProductListingSerializer(serializers.ModelSerializer):
             "disabled",
             "is_digital",
             "item_type",
+            "item_type_name",
+            "creation",
+            "modified",
         ]
 
     def get_cover_image(self, obj):
         request = self.context.get("request")
         if request and obj.cover_image:
             return request.build_absolute_uri(obj.cover_image.url)
+
+    def get_item_type_name(self, obj):
+        return ITEM_TYPE_DICT.get(obj.item_type)
+
+    def get_creation(self, obj):
+        return obj.creation.strftime("%m/%d/%Y %I:%M:%p")
+
+    def get_modified(self, obj):
+        return obj.modified.strftime("%m/%d/%Y %I:%M:%p")
+
+
+class TemplateListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ["id", "product_name"]

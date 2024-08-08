@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from rest_framework import status
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.http.request import QueryDict
 from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
 from apps.store.serializers import ProductListSerializer, CategoryListSerializer
@@ -14,8 +15,215 @@ from apps.store.models import (
     Category,
     ProductVariantAttribute,
 )
-from apps.store.utils import get_category, get_serialized_model_media
+from apps.store.utils import (
+    get_category,
+    get_serialized_model_media,
+    get_session_seller,
+)
 from server.utils import format_currency, load_request_body
+from rest_framework import serializers
+
+
+class ProductMutilMediaSerializerField(serializers.ListField):
+    child = serializers.FileField()
+
+
+class ProductMediaSerializer(serializers.Serializer):
+    file = ProductMutilMediaSerializerField()
+
+
+class VariantAttributeSerializer(serializers.Serializer):
+    attribute = serializers.CharField(max_length=50)
+    attribute_value = serializers.CharField(max_length=50)
+
+
+class ProductTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ["category", "product_name", "seller", "item_type"]
+
+    def create(self, validated_data: dict) -> Product:
+        validated_data["item_type"] = "002"
+        product = Product.objects.create(**validated_data)
+        return product
+
+    def update(self, instance, validated_data: dict) -> Product:
+        to_remove_fields = ["item_type", "seller"]
+        for field in to_remove_fields:
+            if field in validated_data.keys():
+                del validated_data["seller"]
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    product_media = serializers.ListField(
+        child=serializers.ImageField(), required=False
+    )
+    variant_attributes = serializers.ListField(
+        child=VariantAttributeSerializer(), required=False
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            "cover_image",
+            "product_name",
+            "item_type",
+            "description",
+            "category",
+            "template",
+            "stock",
+            "disabled",
+            "is_digital",
+            "net_price",
+            "discount_percentage",
+            "product_media",
+            "seller",
+            "variant_attributes",
+        ]
+
+    def create(self, validated_data: dict):
+        product_media = validated_data.pop("product_media", [])
+        variant_attributes = validated_data.pop("variant_attributes", [])
+        product = Product.objects.create(**validated_data)
+        if product_media:
+            for file in product_media:
+                ProductMedia.objects.create(file=file, product=product)
+
+        if variant_attributes:
+            for attr in variant_attributes:
+                ProductVariantAttribute.objects.create(
+                    product=product,
+                    attribute=attr.get("attribute"),
+                    attribute_value=attr.get("attribute_value"),
+                )
+
+        return product
+
+
+class ProductAPIView(APIView):
+    def post(self, request):
+        body = load_request_body(request.data)
+        validated_data = body
+        category_object = Category.objects.get(id=validated_data.get("category"))
+
+        seller_queryset = get_session_seller(request.user.id)
+        validated_data["category"] = category_object.id
+        validated_data["seller"] = seller_queryset.id
+
+        if validated_data.get("item_type") == "003":
+            validated_data["variant_attributes"] = json.loads(
+                body.get("variant_attributes")
+            )
+
+        if validated_data.get("item_type") == "002":
+            serialized_data = ProductTemplateSerializer(data=validated_data)
+        else:
+            serialized_data = ProductSerializer(data=validated_data)
+
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(
+                data="Product created successfully!", status=status.HTTP_201_CREATED
+            )
+
+        return Response(data=serialized_data.errors, status=status.HTTP_403_FORBIDDEN)
+
+    def put(self, request):
+        try:
+            # product_data = load_request_body(request.data)
+            product_data: QueryDict = request.data
+            product_queryset = Product.objects.get(id=product_data.get("id"))
+            updated_dict = {
+                "product_name": product_data.get("product_name"),
+                "category": Category.objects.get(id=product_data.get("category")),
+                "item_type": product_data.get("item_type"),
+            }
+
+            if product_queryset.item_type == "002":
+                serialized_data = ProductTemplateSerializer(
+                    product_queryset, data=updated_dict, partial=True
+                )
+                if serialized_data.is_valid():
+                    serialized_data.save()
+            else:
+                if product_data.get("cover_image"):
+                    updated_dict["cover_image"] = product_data.get("cover_image")
+
+                if product_queryset.item_type != "002":
+                    updated_dict.update(
+                        {
+                            "description": product_data.get("description"),
+                            "stock": product_data.get("stock"),
+                            "disabled": json.loads(
+                                product_data.get("disabled") or "false"
+                            ),
+                            "is_digital": json.loads(
+                                product_data.get("is_digital") or "false"
+                            ),
+                            "net_price": Decimal(product_data.get("net_price") or 0),
+                        }
+                    )
+
+                if product_data.get("item_type") == "003":
+                    updated_dict["template_id"] = product_data.get("template")
+                    variant_attributes = json.loads(
+                        product_data.get("variant_attributes")
+                    )
+                    ProductVariantAttribute.objects.filter(
+                        product=product_queryset
+                    ).delete()
+                    for attr in variant_attributes:
+                        ProductVariantAttribute.objects.create(
+                            product=product_queryset, **attr
+                        )
+
+                for key in updated_dict.keys():
+                    setattr(product_queryset, key, updated_dict[key])
+
+                product_queryset.save()
+
+                if product_data.get("item_type") != "002":
+                    ntd_files = []
+                    request_files = request.FILES
+                    media_files = request_files.getlist("product_media")
+                    if media_files:
+                        for file in media_files:
+                            media_object = ProductMedia.objects.create(
+                                product=product_queryset, file=file
+                            )
+                            ntd_files.append(media_object.file.url)
+
+                    current_media_file = product_data.getlist("product_media")
+
+                    for url in current_media_file:
+                        if isinstance(url, str):
+                            ntd_files.append("/media/" + url.split("/media/")[-1])
+
+                    current_media_querysets = ProductMedia.objects.filter(
+                        product=product_queryset
+                    )
+                    for fq in current_media_querysets:
+                        if fq.file.url not in ntd_files:
+                            fq.delete()
+
+            return Response(
+                data="Product updated successfully!",
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            import traceback
+
+            print(traceback.format_exc())
+            return Response(
+                data=str(e),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ProductsListPagination(PageNumberPagination):
@@ -40,7 +248,6 @@ class ProductsListPagination(PageNumberPagination):
 
 
 class ProductsApi(ViewSet):
-    # Product API Methods
     def get_home_page_products(self, request):
         home_sections = ["Just For You", "Explore Digital Products"]
         products_data = {
@@ -241,9 +448,10 @@ class ProductsApi(ViewSet):
         for obj in product_reviews:
             reviews_data.append(
                 {
-                    "user_image": (
-                        obj.customer.user.image.url if obj.customer.user.image else None
-                    ),
+                    # "user_image": (
+                    #     obj.customer.user.image.url if obj.customer.user.image else None
+                    # ),
+                    "user_image": None,
                     "review_content": obj.review_content,
                     "rating": obj.rating or 0,
                     "customer_name": obj.customer.customer_name,
@@ -311,4 +519,3 @@ class ProductCategory(ViewSet):
 class ProductAPIViewSet(ViewSet):
     def create_product(self, request):
         req_data = load_request_body(request.data)
-        
