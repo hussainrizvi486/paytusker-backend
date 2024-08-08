@@ -8,11 +8,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+from apps.store.models import PaymentEntry, Product
 from apps.store.models.order import Order, validated_status, OrderItems
-from server import settings
 from apps.store.models.customer import Customer, Cart
-from apps.store.models.product import Product
-from apps.store.models.order import Product
+from server import settings
 
 
 class OrderWebhooks(ViewSet):
@@ -41,6 +40,23 @@ class OrderWebhooks(ViewSet):
 
 
 class StripeOrderPaymentWebhook(APIView):
+    @classmethod
+    def make_payment_entry(self, data: Order):
+        try:
+
+            pe_object = PaymentEntry.objects.create(
+                party_type=PaymentEntry.PartTypeChoices.CUSTOMER,
+                reference_type=data._meta.db_table,
+                reference_id=data.id,
+                mode_of_payment=data.payment_method,
+                party_id=data.customer.id,
+                amount=data.grand_total,
+            )
+            pe_object.save()
+            return pe_object
+
+        except Exception:
+            return None
 
     @classmethod
     def make_customer_order(self, data: dict):
@@ -64,7 +80,6 @@ class StripeOrderPaymentWebhook(APIView):
 
             order_object.save()
             return order_object
-
         except Exception:
             return None
 
@@ -85,7 +100,11 @@ class StripeOrderPaymentWebhook(APIView):
                         "customer_id": metadata.get("customer_id"),
                         "delivery_address": metadata.get("delivery_address"),
                     }
-                    self.make_customer_order(order_object)
+                    order_queryset = self.make_customer_order(order_object)
+
+                    if order_queryset:
+                        self.make_payment_entry(order_queryset)
+
                     return Response(
                         data={
                             "message": "payment confirmed",

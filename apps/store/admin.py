@@ -8,6 +8,8 @@ from apps.store.models.product import (
     ProductDiscount,
     Seller,
 )
+
+from apps.store.models import PaymentEntry
 from apps.store.models.common import Category, ModelMedia
 from apps.store.models.customer import Customer, Cart, CartItem
 from apps.store.models.order import Order, OrderItems, OrderReview
@@ -43,6 +45,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "id"]
 
 
+# @admin.site.register(Order)
 class OrderAdmin(BaseModelAdmin):
     class OrderItemInline(admin.TabularInline):
         model = OrderItems
@@ -52,11 +55,13 @@ class OrderAdmin(BaseModelAdmin):
     inlines = [OrderItemInline]
 
 
+admin.site.register(Order, OrderAdmin)
+admin.site.register(PaymentEntry)
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductDiscount)
 admin.site.register(ProductCategoryCommission)
 admin.site.register(Category, CategoryAdmin)
-admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItems)
 admin.site.register(Customer, BaseModelAdmin)
 admin.site.register(Cart)
