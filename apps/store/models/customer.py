@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
 from .base import BaseModel
 from .product import Product
-from apps.accounts.models import User
+from apps.auth_user.models import User
 
 
 class Customer(BaseModel):
@@ -33,6 +33,7 @@ class Cart(BaseModel):
 
         return super().save(*args, **kwargs)
 
+    
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)

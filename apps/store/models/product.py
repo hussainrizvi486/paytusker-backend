@@ -1,4 +1,4 @@
-from typing import Any, Iterable
+from typing import Any
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from .base import BaseModel
 from .common import Category
+from .seller import Seller
 
 
 class ProductManager(models.Manager):
@@ -14,20 +15,21 @@ class ProductManager(models.Manager):
 
 
 class Product(BaseModel):
-    cover_image = models.ImageField(max_length=10000, null=True)
+    class ItemTypeChoices(models.TextChoices):
+        TEMPLATE = "002", "Template"
+        VARIANT = "003", "Variant"
+        NORMAL = "001", "Normal"
+
+    cover_image = models.ImageField(max_length=10000, null=True, blank=True)
     product_name = models.CharField(max_length=9999)
     item_type = models.CharField(
         max_length=999,
-        choices=(
-            ("001", "Normal"),
-            ("002", "Template"),
-            ("003", "Varient"),
-        ),
-        default="001",
+        choices=ItemTypeChoices.choices,
+        default=ItemTypeChoices.NORMAL,
         null=True,
         blank=True,
     )
-    description = models.TextField(default=product_name, null=True)
+    description = models.TextField(null=True, blank=True)
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -38,67 +40,81 @@ class Product(BaseModel):
     rating = models.IntegerField(null=True, blank=True, default=0)
     disabled = models.BooleanField(default=False, null=True)
     is_digital = models.BooleanField(default=False, null=True)
-    value = models.DecimalField(
-        default=0, decimal_places=2, max_digits=12, null=True, blank=True
-    )
     net_price = models.DecimalField(
-        default=0, decimal_places=2, max_digits=12, null=True, blank=True
-    )
-    product_price = models.DecimalField(
-        default=0, decimal_places=2, max_digits=12, null=True, blank=True
-    )
-
-    price = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
     commission_rate = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
-
+    product_price = models.DecimalField(
+        default=0, decimal_places=2, max_digits=12, null=True, blank=True
+    )
     discount_percentage = models.DecimalField(
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
+    price = models.DecimalField(
+        default=0, decimal_places=2, max_digits=12, null=True, blank=True
+    )
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE, null=True, blank=True)
 
     objects = ProductManager()
 
     def __str__(self) -> str:
         return self.product_name
 
+    def delete(self, *args, **kwargs):
+        if self.cover_image:
+            storage, path = self.cover_image.storage, self.cover_image.path
+            super(Product, self).delete(*args, **kwargs)
+            storage.delete(path)
+
+        super(Product, self).delete(*args, **kwargs)
+
     def get_product_images(self, request=None):
-        query_set = ProductMedia.objects.filter(product=self)
         images_list = []
-        if query_set:
+        if hasattr(self, "productmedia_set"):
             if request:
                 images_list = [
-                    request.build_absolute_uri(row.file.url) for row in query_set
+                    request.build_absolute_uri(row.file.url)
+                    for row in self.productmedia_set.all()
                 ]
-                if self.cover_image:
-                    images_list.insert(
-                        0, request.build_absolute_uri(self.cover_image.url)
-                    )
             else:
-                images_list = [row.file.url for row in query_set]
-                images_list.insert(0, self.cover_image.url)
+
+                images_list = [row.file.url for row in self.productmedia_set.all()]
+
+        if self.cover_image:
+            images_list.insert(0, self.cover_image.url)
         return images_list
 
     def save(self, *args, **kwargs) -> None:
         if hasattr(self.category, "productcategorycommission"):
-            commission_rate = self.category.productcategorycommission.commission_rate
+            commission_rate = Decimal(
+                self.category.productcategorycommission.commission_rate or 0
+            )
             self.commission_rate = commission_rate
+        else:
+            self.commission_rate = Decimal(0)
 
-        self.price = self.net_price + (self.commission_rate / 100 * self.net_price)
+        self.price = self.net_price + ((self.commission_rate / 100) * self.net_price)
         self.product_price = self.price
         self.price = self.price - ((self.price / 100) * self.discount_percentage)
-
         return super().save(*args, **kwargs)
 
 
 class ProductMedia(BaseModel):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     file = models.FileField(max_length=10000)
 
     def __str__(self) -> str:
         return self.product.product_name
+
+    def delete(self, *args, **kwargs):
+        if self.file:
+            storage, path = self.file.storage, self.file.path
+            # super(ProductMedia, self).delete(*args, **kwargs)
+            storage.delete(path)
+
+        super(ProductMedia, self).delete(*args, **kwargs)
 
 
 class ProductVariantAttribute(BaseModel):
@@ -110,7 +126,7 @@ class ProductVariantAttribute(BaseModel):
 class ProductCategoryCommission(BaseModel):
     category = models.OneToOneField(Category, on_delete=models.CASCADE)
     commission_rate = models.DecimalField(
-        decimal_places=2, max_digits=12, null=True, blank=True
+        decimal_places=2, max_digits=12, null=True, blank=True, default=0
     )
 
     def __str__(self) -> str:
@@ -128,7 +144,6 @@ class ProductDiscount(BaseModel):
 
     def save(self, *args, **kwargs) -> None:
         self.product.discount_percentage = self.discount_percentage
-
         self.product.save()
         return super().save(*args, **kwargs)
 

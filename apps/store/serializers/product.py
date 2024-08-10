@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.store.models import Product, Category
 from server.utils import format_currency
+from datetime import datetime
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -44,15 +45,92 @@ class ProductListSerializer(serializers.ModelSerializer):
         return format_currency(object.price or 0)
 
 
-class CategoryListSerializer(serializers.ModelSerializer):
-    # image = serializers.SerializerMethodField()
+class AmendProductSerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
 
+
+class CategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "image"]
 
-    def get_image(self, object):
-        if self.context.get("request") and object.image:
-            return self.context.get("request").build_absolute_uri(object.image.url)
+    def get_image(self, obj):
+        request = self.context.get("request")
+        if request and obj.image:
+            return request.build_absolute_uri(obj.image.url)
 
-        return object.image.url or None
+        return obj.image.url or None
+
+
+ITEM_TYPE_DICT = {
+    "001": "Normal",
+    "002": "Template",
+    "003": "Variant",
+}
+
+
+# variants
+class VariantsGroupbySerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "cover_image",
+            "product_name",
+            "category",
+            "net_price",
+            "stock",
+            "disabled",
+            "is_digital",
+            "item_type",
+            "item_type_name",
+            "creation",
+            "modified",
+        ]
+
+    ...
+
+
+class SellerProductListingSerializer(serializers.ModelSerializer):
+    category = CategoryListSerializer()
+    modified = serializers.SerializerMethodField()
+    creation = serializers.SerializerMethodField()
+    item_type_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "cover_image",
+            "product_name",
+            "category",
+            "net_price",
+            "stock",
+            "disabled",
+            "is_digital",
+            "item_type",
+            "item_type_name",
+            "creation",
+            "modified",
+        ]
+
+    def get_cover_image(self, obj):
+        request = self.context.get("request")
+        if request and obj.cover_image:
+            return request.build_absolute_uri(obj.cover_image.url)
+
+    def get_item_type_name(self, obj):
+        return ITEM_TYPE_DICT.get(obj.item_type)
+
+    def get_creation(self, obj):
+        return obj.creation.strftime("%m/%d/%Y %I:%M:%p")
+
+    def get_modified(self, obj):
+        return obj.modified.strftime("%m/%d/%Y %I:%M:%p")
+
+
+class TemplateListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ["id", "product_name"]

@@ -13,3 +13,7 @@ class Category(BaseModel):
             return self.name
         return f"{self.parent} --> {self.name}"
 
+class ModelMedia(models.Model):
+    model_name = models.CharField(max_length=999)
+    field_id = models.CharField(max_length=999)
+    file = models.FileField()

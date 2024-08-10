@@ -1,21 +1,21 @@
 import json
 import stripe
 import math
+import traceback
 from decimal import Decimal
-from datetime import datetime
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
 from rest_framework import status
+
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart, Customer
 from apps.store.models.product import Product
-from apps.store.models.base import ModelMedia
+from apps.store.models import ModelMedia, UserAddress, StoreErrorLogs
 from apps.store.permissions import IsCustomerUser
-from apps.accounts.models import Address
 from apps.store.pagination import ListQuerySetPagination
 from apps.store.erpnext import sync_order
 from server import settings
@@ -27,6 +27,10 @@ endpoint_secret = settings.STRIPE_END_SECRECT_KEY
 
 @permission_classes([IsCustomerUser])
 class OrderApi(ViewSet):
+    @classmethod
+    def clear_customer_cart(self, customer_id: str):
+        Cart.objects.filter(customer__id=customer_id).delete()
+
     def create_order(self, request):
         available_payment_methods = [
             "card",
@@ -37,20 +41,17 @@ class OrderApi(ViewSet):
         customer = get_customer(user=request.user)
         payment_method = data.get("payment_method")
 
-        if not customer:
-            return Response(
-                data="User is not a customer", status=status.HTTP_403_FORBIDDEN
-            )
-
         if payment_method not in available_payment_methods:
             return Response(
                 data="Please select valid payment method",
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        delivery_address = Address.objects.get(id=data.get("delivery_address"))
+        delivery_address = UserAddress.objects.get(id=data.get("delivery_address"))
         customer_cart = Cart.objects.get(customer=customer)
-        cart_items = CartItem.objects.all().filter(cart=customer_cart)
+        cart_items = CartItem.objects.prefetch_related("item").filter(
+            cart=customer_cart
+        )
 
         if not self.validate_customer_origin(delivery_address, cart_items):
             return Response(
@@ -60,17 +61,18 @@ class OrderApi(ViewSet):
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        items_data = []
-        stripe_line_items = []
-
+        ordered_items = []
+        line_items = []
         for item in cart_items:
-            items_data.append(
+            ordered_items.append(
                 {
                     "id": item.item.id,
                     "qty": float(item.qty),
+                    "rate": float(item.item.price),
                 }
             )
-            stripe_line_items.append(
+
+            line_items.append(
                 {
                     "price_data": {
                         "currency": "usd",
@@ -88,9 +90,9 @@ class OrderApi(ViewSet):
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=[payment_method],
-            line_items=stripe_line_items,
+            line_items=line_items,
             metadata={
-                "items": json.dumps(items_data),
+                "items": json.dumps(ordered_items),
                 "payment_method": payment_method,
                 "delivery_address": delivery_address.id,
                 "customer_id": customer.id,
@@ -101,6 +103,7 @@ class OrderApi(ViewSet):
             billing_address_collection="auto",
         )
 
+        self.clear_customer_cart(customer.id)
         return Response(
             {
                 "checkout_session": checkout_session.id,
@@ -315,10 +318,6 @@ class CustomerFunctions(ViewSet):
         return Response(data={"reviews": None})
 
 
-from django.http import JsonResponse
-from apps.store.models import StoreErrorLogs
-
-
 @csrf_exempt
 def order_payment_confirm_webhook(request):
     payload = request.body
@@ -336,11 +335,11 @@ def order_payment_confirm_webhook(request):
                 order_items = json.loads(order_items)
 
                 payment_method = metadata["payment_method"]
-                delivery_address = Address.objects.get(id=metadata["delivery_address"])
+                # delivery_address = Address.objects.get(id=metadata["delivery_address"])
                 customer = Customer.objects.get(id=metadata["customer_id"])
 
                 order_queryset = Order.objects.create(
-                    delivery_address=delivery_address,
+                    # delivery_address=delivery_address,
                     payment_method=payment_method,
                     order_status="001",
                     payment_status=True,
@@ -365,8 +364,6 @@ def order_payment_confirm_webhook(request):
                     log1.save()
 
         except Exception as e:
-            import traceback
-
             return JsonResponse(
                 {"error": str(e), "trace back": str(traceback.format_exc())}
             )
