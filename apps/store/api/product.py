@@ -502,7 +502,29 @@ class ProductsApi(ViewSet):
 
 class ProductCategory(ViewSet):
     def get_categories(self, request):
-        physical = Category.objects.filter(digital=False)[:12]
+        physical_order = [
+            "Cosmetics",
+            "Jewelry",
+            "Dogs & Pets",
+            "Cameras",
+            "Household Items",
+            "Gadgets",
+            "Computers",
+            "Watches",
+            "Women's shoes",
+            "Men's Clothes",
+            "Headphones",
+        ]
+        physical = Category.objects.filter(digital=False).order_by(
+            models.Case(
+                *[
+                    models.When(name=name, then=pos)
+                    for pos, name in enumerate(physical_order)
+                ]
+            )
+        )[:12]
+
+        # physical = Category.objects.filter(digital=False)[:12]
         digital = Category.objects.filter(digital=True)[:12]
 
         category_data = {

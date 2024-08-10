@@ -2,25 +2,12 @@ from django.db import models
 from django.db.models import Avg
 from datetime import timedelta
 
-# from .base import
-from .product import Product, BaseModel
-
+from . import UserAddress, Product, BaseModel
 from .customer import Customer
 from server.utils import generate_snf_id
 
-# from apps.auth_user.models import Address
-from django.core.serializers import serialize
-
 
 validated_status = ["001", "002", "003", "004", "005", "006"]
-ORDER_STATUS = (
-    ("001", "Order Pending"),
-    ("002", "Order Confirmed"),
-    ("003", "In Process"),
-    ("004", "Shipping"),
-    ("005", "Delivered"),
-    ("006", "Cancelled"),
-)
 
 
 class Order(BaseModel):
@@ -58,9 +45,9 @@ class Order(BaseModel):
         decimal_places=2, max_digits=12, null=True, blank=True
     )
 
-    # delivery_address = models.ForeignKey(
-    #     Address, null=True, blank=True, on_delete=models.SET_NULL
-    # )
+    delivery_address = models.ForeignKey(
+        UserAddress, null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     def __str__(self) -> str:
         return f"{self.customer} {self.order_id}"
@@ -72,7 +59,6 @@ class Order(BaseModel):
 
     def save(self, *args, **kwargs):
         self.calulate_validate_total()
-
         if not self.delivery_date and self.order_date:
             self.delivery_date = self.order_date + timedelta(days=10)
         super().save(*args, **kwargs)
@@ -94,6 +80,14 @@ class Order(BaseModel):
 
 
 class OrderItems(BaseModel):
+    class StatusChoices(models.TextChoices):
+        ORDER_PENDING = "001", "Order Pending"
+        ORDER_CONFIRMED = "002", "Order Confirmed"
+        IN_PROCESS = "003", "In Process"
+        SHIPPING = "004", "Shipping"
+        DELIVERED = "005", "Delivered"
+        CANCELLED = "006", "Cancelled"
+
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="order_items"
     )
@@ -107,7 +101,7 @@ class OrderItems(BaseModel):
     amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     has_review = models.BooleanField(default=False)
     status = models.CharField(
-        choices=ORDER_STATUS,
+        choices=StatusChoices,
         null=True,
         blank=True,
         max_length=999,

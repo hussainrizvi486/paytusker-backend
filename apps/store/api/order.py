@@ -1,22 +1,21 @@
 import json
 import stripe
 import math
+import traceback
 from decimal import Decimal
-from datetime import datetime
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
 from rest_framework import status
+
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart, Customer
 from apps.store.models.product import Product
-from apps.store.models import ModelMedia, UserAddress
+from apps.store.models import ModelMedia, UserAddress, StoreErrorLogs
 from apps.store.permissions import IsCustomerUser
-
-# from apps.accounts.models import Address
 from apps.store.pagination import ListQuerySetPagination
 from apps.store.erpnext import sync_order
 from server import settings
@@ -327,6 +326,9 @@ def order_payment_confirm_webhook(request):
     if sig_header:
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+            log = StoreErrorLogs.objects.create(log="stripe Event created")
+            log.save()
+
             if event.type == "checkout.session.completed":
                 metadata = event["data"]["object"]["metadata"]
                 order_items = metadata["items"]
@@ -335,6 +337,7 @@ def order_payment_confirm_webhook(request):
                 payment_method = metadata["payment_method"]
                 # delivery_address = Address.objects.get(id=metadata["delivery_address"])
                 customer = Customer.objects.get(id=metadata["customer_id"])
+
                 order_queryset = Order.objects.create(
                     # delivery_address=delivery_address,
                     payment_method=payment_method,
@@ -352,14 +355,18 @@ def order_payment_confirm_webhook(request):
                     )
 
                 order_queryset.save()
-                Cart.objects.filter(customer=order_queryset.customer).delete()
-                sync_order(order_queryset)
-        except Exception as e:
-            from pprint import pprint
-            import traceback
 
-            pprint(traceback.format_exc())
-            return HttpResponse(status=400)
+                Cart.objects.filter(customer=order_queryset.customer).delete()
+                try:
+                    sync_order(order_queryset)
+                except Exception as e:
+                    log1 = StoreErrorLogs.objects.create(log=str(e))
+                    log1.save()
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": str(e), "trace back": str(traceback.format_exc())}
+            )
 
         return HttpResponse(status=200)
 
