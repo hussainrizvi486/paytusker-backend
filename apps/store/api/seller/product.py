@@ -56,7 +56,9 @@ class ListSellerProducts(views.APIView):
         variants_queryset = Product.objects.select_related("category").filter(
             template__id=template
         )
-        serializer = SellerProductListingSerializer(variants_queryset, many=True)
+        serializer = SellerProductListingSerializer(
+            variants_queryset, many=True, context={"request": self.request}
+        )
         return serializer.data
 
     def group_by_variances(self, data: List[Dict]) -> List[Dict]:
@@ -67,7 +69,7 @@ class ListSellerProducts(views.APIView):
         return data
 
     def get(self, request):
-        # seller = get_session_seller(request.user.id)
+        seller = get_session_seller(request.user.id)
         if request.GET.get("id"):
             product_queryset = Product.objects.select_related("category").get(
                 id=request.GET.get("id")
@@ -134,8 +136,9 @@ class ListSellerProducts(views.APIView):
             queryset_filters = self.validate_search_filters(search_filter)
             queryset = (
                 Product.objects.select_related("category")
-                # .filter(seller=seller)
-                .filter(**queryset_filters).exclude(item_type="003")
+                .filter(seller=seller)
+                .filter(**queryset_filters)
+                .exclude(item_type="003")
             )
 
             paginated_queryset = pagination.paginate_queryset(queryset, request)
@@ -144,5 +147,4 @@ class ListSellerProducts(views.APIView):
             )
             products_data = serialized_data.data
             products_data = self.group_by_variances(products_data)
-
             return pagination.get_paginated_response(products_data)

@@ -7,14 +7,10 @@ from ..serializers import LoginHistorySerializer, UserProfileSerializer
 
 
 class UserLoginLogs(ListAPIView):
-    # permission_classes = [IsAuthenticated]
     serializer_class = LoginHistorySerializer
 
     def get_queryset(self):
-        # return LoginHistory.objects.filter(user=self.request.user)
-        return LoginHistory.objects.all()
-
-
+        return LoginHistory.objects.filter(user=self.request.user)
 
 
 class UserProfileDetail(views.APIView):
@@ -24,7 +20,3 @@ class UserProfileDetail(views.APIView):
         user_queryset = User.objects.get(id=request.user.id)
         serializer = UserProfileSerializer(user_queryset)
         return Response(data=serializer.data)
-        ...
-
-
-# class UserProfile(views.)

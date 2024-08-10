@@ -12,7 +12,7 @@ from .erpnext.apis import ERPNextProductsApi, ERPNextItemGroupsApi
 from .webhooks import webhooks_paths, OrderWebhooks, StripeOrderPaymentWebhook
 from apps.store.api import CategoryList, ProductTemplateList
 
-erpnext_api_urls = [
+erpnext_hooks = [
     path(
         "api/erpnext/product/sync",
         ERPNextProductsApi.as_view({"post": "sync_product"}),
@@ -32,16 +32,24 @@ erpnext_api_urls = [
 ]
 
 
-seller_apis_urls = [
+seller_api = [
     path("api/seller/product/list", ListSellerProducts.as_view()),
 ]
 
+
+webhooks = [
+    path("webhooks/payment/orders", StripeOrderPaymentWebhook.as_view()),
+    path(
+        "webhooks/order/update-status",
+        OrderWebhooks.as_view({"post": "update_order_status"}),
+    ),
+]
 
 urlpatterns = [
     path("api/product/template/list", ProductTemplateList.as_view()),
     path("api/seller/product", ProductAPIView.as_view()),
     path("api/category/list", CategoryList.as_view()),
-    path("webhooks/payment/orders", StripeOrderPaymentWebhook.as_view()),
+    
     # path("webhooks/payment/orders", order_payment_confirm_webhook),
     path(
         "api/product/details",
@@ -78,14 +86,11 @@ urlpatterns = [
         "api/customer/reviews/pending",
         CustomerFunctions.as_view({"get": "to_review_items"}),
     ),
-    path(
-        "webhooks/order/update-status",
-        OrderWebhooks.as_view({"post": "update_order_status"}),
-    ),
     path("api/user/address", UserAddressViewSet.as_view()),
     path("api/product/upload-details", get_upload_product_data),
 ]
 
 
-urlpatterns.extend(erpnext_api_urls)
-urlpatterns.extend(seller_apis_urls)
+urlpatterns.extend(webhooks)
+urlpatterns.extend(erpnext_hooks)
+urlpatterns.extend(seller_api)

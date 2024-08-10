@@ -43,7 +43,6 @@ class StripeOrderPaymentWebhook(APIView):
     @classmethod
     def make_payment_entry(self, data: Order):
         try:
-
             pe_object = PaymentEntry.objects.create(
                 party_type=PaymentEntry.PartTypeChoices.CUSTOMER,
                 reference_type=data._meta.db_table,
@@ -69,7 +68,8 @@ class StripeOrderPaymentWebhook(APIView):
             )
 
             order_object.save()
-            for item in data.get("items"):
+            from typing import List, Dict
+            for item in data.get("items", []):
                 orderitem_object = OrderItems.objects.create(
                     order=order_object,
                     rate=Decimal(item.get("rate")),
@@ -77,7 +77,6 @@ class StripeOrderPaymentWebhook(APIView):
                     item=Product.objects.get(id=item.get("id")),
                 )
                 orderitem_object.save()
-
             order_object.save()
             return order_object
         except Exception:
