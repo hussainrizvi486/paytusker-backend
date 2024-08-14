@@ -31,7 +31,7 @@ class UserAdminView(UserAdmin):
         (None, {"fields": ("username", "password")}),
         (
             ("Personal info"),
-            {"fields": ("image", "first_name", "last_name", "email", "phone_number")},
+            {"fields": ( "first_name", "last_name", "email", "phone_number")},
         ),
         (
             ("Permissions"),

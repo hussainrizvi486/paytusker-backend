@@ -45,6 +45,9 @@ class ListSellerProducts(views.APIView):
         if filters.get("disabled"):
             q_filters["disabled"] = bool(int(filters.get("disabled")))
 
+        if filters.get("is_digital"):
+            q_filters["is_digital"] = bool(int(filters.get("is_digital")))
+
         if filters.get("creation"):
             q_filters["creation__date"] = datetime.strptime(
                 filters.get("creation"), "%Y-%m-%d"

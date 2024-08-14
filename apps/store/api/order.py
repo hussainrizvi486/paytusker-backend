@@ -4,6 +4,7 @@ import math
 import traceback
 from decimal import Decimal
 from django.http import HttpResponse, JsonResponse
+from django.db.models import QuerySet
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -103,7 +104,7 @@ class OrderApi(ViewSet):
             billing_address_collection="auto",
         )
 
-        self.clear_customer_cart(customer.id)
+        # self.clear_customer_cart(customer.id)
         return Response(
             {
                 "checkout_session": checkout_session.id,
@@ -112,17 +113,19 @@ class OrderApi(ViewSet):
             status=status.HTTP_200_OK,
         )
 
-    def validate_customer_origin(self, address_object, cart_items):
+    def validate_customer_origin(
+        self, address_object: UserAddress, cart_items: QuerySet[CartItem]
+    ):
         exists = False
-        for item in cart_items:
-            if not item.item.is_digital:
+        for row in cart_items:
+            if not row.item.is_digital:
                 exists = True
                 break
 
         if exists and address_object.country != "United States":
             return False
-        else:
-            return True
+
+        return True
 
     def get_customer_orders(self, request):
         paginator = ListQuerySetPagination(page_size=5)

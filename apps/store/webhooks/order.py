@@ -60,15 +60,15 @@ class StripeOrderPaymentWebhook(APIView):
     @classmethod
     def make_customer_order(self, data: dict):
         try:
+            customer = Customer.objects.get(id=data.get("customer_id"))
             order_object = Order.objects.create(
-                customer=Customer.objects.get(id=data.get("customer_id")),
+                customer=customer,
                 order_status=Order.StatusChoices.ORDER_PENDING,
                 payment_status=True,
                 payment_method=data.get("payment_method"),
             )
 
             order_object.save()
-            from typing import List, Dict
             for item in data.get("items", []):
                 orderitem_object = OrderItems.objects.create(
                     order=order_object,
@@ -78,6 +78,8 @@ class StripeOrderPaymentWebhook(APIView):
                 )
                 orderitem_object.save()
             order_object.save()
+
+            Cart.objects.filter(customer=customer).delete()
             return order_object
         except Exception:
             return None

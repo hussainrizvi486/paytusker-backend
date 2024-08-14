@@ -1,30 +1,23 @@
-import json
 from decimal import Decimal
+from django.http import HttpRequest
+from django.db import models
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
-from apps.store.serializers import ProductListSerializer, CategoryListSerializer
+from apps.store.serializers import ProductListSerializer
 from apps.store.models import (
     Product,
     ProductVariantAttribute,
 )
 from apps.store.pagination import ProductsListPagination
-from apps.store.utils import get_category, get_serialized_model_media
-from server.utils import format_currency
+from server.utils import load_request_body
 
 
 class SearchProductsApi(APIView):
-    def get(self, request):
+    def get(self, request: HttpRequest):
         query = request.GET.get("query")
         category_id = request.GET.get("category")
-        filters = {}
-
-        if request.GET.get("filters"):
-            try:
-                filters = json.loads(request.GET.get("filters"))
-            except json.JSONDecodeError:
-                filters = {}
-
+        filters = load_request_body(request.GET.get("filters", {}))
         products_queryset = None
         pagniator = ProductsListPagination()
 
@@ -33,21 +26,25 @@ class SearchProductsApi(APIView):
 
         if query:
             query = str(query).strip()
-            vector = SearchVector("product_name", "description")
+            vector = SearchVector("product_name")
             search_query = SearchQuery(query)
-            products_queryset = (
+            products_queryset: models.QuerySet[Product] = (
                 Product.objects.list_queryset()
+                .prefetch_related("category")
                 .annotate(rank=SearchRank(vector=vector, query=search_query))
                 .filter(rank__gte=0.001)
                 .order_by("-rank")
             )
 
         elif category_id:
-            products_queryset = Product.objects.list_queryset().filter(
-                category__id=category_id
+            products_queryset = (
+                Product.objects.list_queryset()
+                .prefetch_related("category")
+                .filter(category__id=category_id)
             )
 
         if products_queryset:
+            products_queryset = products_queryset.order_by("-rating")
             filters_attributes = self.get_search_product_attributes(products_queryset)
             attributes_filter: dict = filters.get("attributes")
             if attributes_filter:

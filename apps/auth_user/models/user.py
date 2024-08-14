@@ -37,7 +37,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, unique=False, null=False)
     phone_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
-    modified = models.DateTimeField(auto_now=True)
+    modified = models.DateTimeField(auto_now=True, null=True)
     verified = models.BooleanField(default=False)
     objects = UserManager()
 
@@ -45,7 +45,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     def __str__(self) -> str:
-        return self.username or self.email or self.id
+        return str(self.email)
 
     def get_user_roles(self):
         roles = []
@@ -53,14 +53,20 @@ class User(AbstractUser):
             roles = [obj.role for obj in self.userroles_set.all()]
         return roles
 
+    def has_role(self, role):
+        roles = self.get_user_roles()
+        return role in roles
+
 
 class UserRoles(models.Model):
+    class RoleChoices(models.TextChoices):
+        SELLER = "seller", "Seller"
+        CUSTOMER = "customer", "Customer"
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(
-        choices=(
-            ("seller", "seller"),
-            ("customer", "customer"),
-        ),
+        max_length=20,
+        choices=RoleChoices.choices,
         null=False,
         blank=False,
     )

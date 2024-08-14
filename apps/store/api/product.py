@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from rest_framework import status
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.http.request import QueryDict
+from django.db import models
 from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
 from apps.store.serializers import ProductListSerializer, CategoryListSerializer
@@ -101,7 +101,6 @@ class ProductSerializer(serializers.ModelSerializer):
                     attribute=attr.get("attribute"),
                     attribute_value=attr.get("attribute_value"),
                 )
-
         return product
 
 
@@ -251,7 +250,7 @@ class ProductsApi(ViewSet):
     def get_home_page_products(self, request):
         home_sections = ["Just For You", "Explore Digital Products"]
         products_data = {
-            "Just For You": Product.objects.list_queryset()[0:24],
+            "Just For You": Product.objects.list_queryset().order_by("?")[0:24],
             # "Explore Digital Products": Product.objects.list_queryset().filter(
             #     is_digital=True
             # )[0:20],
@@ -266,7 +265,9 @@ class ProductsApi(ViewSet):
             data={
                 "home_products": products_data,
                 "digital_products": ProductListSerializer(
-                    Product.objects.list_queryset().filter(is_digital=True)[0:20],
+                    Product.objects.list_queryset()
+                    .order_by("?")
+                    .filter(is_digital=True)[0:20],
                     many=True,
                     context={"request": request},
                 ).data,
@@ -288,10 +289,12 @@ class ProductsApi(ViewSet):
             )
 
         product_images = self.get_product_images(product)
+
         product_data_object = {
             "id": product.id,
             "product_name": product.product_name,
             "product_price": product.price,
+            "is_digital": product.is_digital,
             "formatted_price": format_currency(product.price),
             "cover_image": product.cover_image.url if product.cover_image else None,
             "images": product_images,
@@ -435,14 +438,14 @@ class ProductsApi(ViewSet):
 
     def get_product_object(self, id):
         try:
-            product = Product.objects.get(id=id)
+            product = Product.objects.prefetch_related("category").get(id=id)
             return product
 
         except Product.DoesNotExist:
             return None
 
     def get_product_reviews(self, product_object):
-        product_reviews = OrderReview.objects.filter(product=product_object)
+        product_reviews = OrderReview.objects.prefetch_related("customer").filter(product=product_object)
         reviews_data = []
 
         for obj in product_reviews:

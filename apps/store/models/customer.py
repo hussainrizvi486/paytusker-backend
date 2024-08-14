@@ -15,6 +15,7 @@ class Customer(BaseModel):
         return self.user.username
 
 
+
 class Cart(BaseModel):
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
     total_qty = models.DecimalField(

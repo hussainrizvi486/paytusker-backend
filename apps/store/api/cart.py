@@ -22,7 +22,10 @@ class CartApi(ViewSet):
         product = Product.objects.get(id=product_id)
         customer = get_customer(user)
         if not customer:
-            return Response(data={"message":"only customer can add products to cart"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response(
+                data={"message": "only customer can add products to cart"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         cart, created = Cart.objects.get_or_create(customer=customer)
         try:
             cart_item = CartItem.objects.get(item=product, cart=cart)
@@ -53,7 +56,9 @@ class CartApi(ViewSet):
         if not cart_object:
             return Response(data=user_cart_data)
 
-        cart_items_queryset = CartItem.objects.filter(cart=cart_object)
+        cart_items_queryset = CartItem.objects.prefetch_related("item").filter(
+            cart=cart_object
+        )
         if cart_items_queryset:
             user_cart_data["items"] = []
             for item in cart_items_queryset:
@@ -61,6 +66,7 @@ class CartApi(ViewSet):
                     {
                         "id": item.id,
                         "qty": item.qty,
+                        "product_id": item.item.id,
                         "rate": item.rate,
                         "amount": item.amount,
                         "formatted_amount": item.amount,
