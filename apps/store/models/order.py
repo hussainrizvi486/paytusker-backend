@@ -26,7 +26,7 @@ class Order(BaseModel):
     order_date = models.DateField(auto_now_add=True)
     delivery_date = models.DateField(null=True, blank=True)
     order_status = models.CharField(
-        choices=StatusChoices,
+        choices=StatusChoices.choices,
         null=True,
         blank=True,
         max_length=999,
@@ -101,7 +101,7 @@ class OrderItems(BaseModel):
     amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     has_review = models.BooleanField(default=False)
     status = models.CharField(
-        choices=StatusChoices,
+        choices=StatusChoices.choices,
         null=True,
         blank=True,
         max_length=999,
