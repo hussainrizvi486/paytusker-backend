@@ -16,7 +16,6 @@ class ERPNextProductsApi(ViewSet):
     def sync_product(self, request):
         data: dict = request.data
         validated_product_data, message = self.validate_product_data(data)
-
         if not validated_product_data:
             return Response(data={"message": message}, status=status.HTTP_403_FORBIDDEN)
 
@@ -34,6 +33,7 @@ class ERPNextProductsApi(ViewSet):
         if product_id:
             Product.objects.filter(id=product_id).update(**product_object)
             product = Product.objects.get(id=product_id)
+            product.save()
             ProductMedia.objects.filter(product=product).delete()
         else:
             try:
