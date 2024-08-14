@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
 from .base import BaseModel
 from .product import Product
-from apps.auth_user.models import User
+from apps.auth_user.models import User, UserRoles
 
 
 class Customer(BaseModel):
@@ -14,6 +14,10 @@ class Customer(BaseModel):
     def __str__(self) -> str:
         return self.user.username
 
+    def save(self, *args, **kwargs) -> None:
+        if not self.user.has_role(UserRoles.RoleChoices.CUSTOMER):
+            UserRoles.objects.create(user=self.user, role=UserRoles.RoleChoices.CUSTOMER)
+        return super().save(*args, **kwargs)
 
 
 class Cart(BaseModel):
@@ -34,7 +38,6 @@ class Cart(BaseModel):
 
         return super().save(*args, **kwargs)
 
-    
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)

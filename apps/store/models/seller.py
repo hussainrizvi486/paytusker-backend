@@ -13,13 +13,8 @@ class Seller(BaseProfile):
         return self.seller_name
 
     def save(self, *args, **kwargs) -> None:
-
         if not self.user.has_role(UserRoles.RoleChoices.SELLER):
-            print("No Role")
-            
             UserRoles.objects.create(user=self.user, role=UserRoles.RoleChoices.SELLER)
-            # role_object.save()
-
         return super().save(*args, **kwargs)
 
 
