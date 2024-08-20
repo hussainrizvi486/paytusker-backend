@@ -140,7 +140,6 @@ AUTH_USER_MODEL = "auth_user.User"
 
 
 # JWT Configuration
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=2),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
@@ -175,6 +174,8 @@ SIMPLE_JWT = {
     "TOKEN_OBTAIN_SERIALIZER": "auth_user.serializers.AuthTokenSerializer",
 }
 
+# PASSWORD RESET TIMEOUT
+PASSWORD_RESET_TIMEOUT = 900
 
 # Custom Variables
 STRIPE_API_KEY = os.environ["STRIPE_API_KEY"]
@@ -185,3 +186,12 @@ STRIPE_PAYMENT_FAILED_URL = os.environ["STRIPE_PAYMENT_FAILED_URL"]
 
 # ERPNEXT API URL
 ERPNEXT_API_URL = "https://crm.paytusker.us/"
+
+
+# EMAIL SETTINGS
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "hussainrizvi486@gmail.com"
+EMAIL_HOST_PASSWORD = "nulf zoda qlvo ramk"

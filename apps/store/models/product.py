@@ -165,4 +165,5 @@ def update_product_commission(sender, instance, created=None, *args, **kwargs):
                 product.price = product.net_price + (
                     commission_rate / 100 * product.net_price
                 )
+
             Product.objects.bulk_update(products_queryset, ["commission_rate"])
