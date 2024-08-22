@@ -119,7 +119,13 @@ class PasswordResetEmailSerializer(serializers.Serializer):
             user = User.objects.get(email=attrs.get("email"))
             token = generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.id))
-            reset_url = f"https://paytusker.com/password/reset?uid={uid}?token={token}"
+
+            # reset_url = (
+            #     f"https://paytusker.com/login/password/reset?uid={uid}&token={token}"
+            # )
+            reset_url = (
+                f"http://localhost:5173/login/password/reset?uid={uid}&token={token}"
+            )
             message = render_to_string(
                 "email/password_reset_email.html",
                 {
@@ -140,7 +146,6 @@ class PasswordResetEmailSerializer(serializers.Serializer):
 
 
 class ResetForgotPasswordSerializer(serializers.Serializer):
-    current_password = serializers.CharField(max_length=20)
     new_password = serializers.CharField(max_length=20)
 
     def validate(self, attrs: dict):
@@ -148,12 +153,19 @@ class ResetForgotPasswordSerializer(serializers.Serializer):
             context = self.context
             user_id = smart_str(urlsafe_base64_decode(context.get("uid")))
             user = User.objects.get(id=user_id)
-            if not PasswordResetTokenGenerator.check_token(token=context.get("token")):
+
+            if not PasswordResetTokenGenerator().check_token(
+                token=context.get("token"), user=user
+            ):
                 raise ValidationError("Token is not valid")
+
             user.set_password(attrs.get("new_password"))
+            user.save()
+
             return super().validate(attrs)
-        except DjangoUnicodeDecodeError:
-            PasswordResetTokenGenerator.check_token(user, context.get("token"))
+
+        except Exception:
+            PasswordResetTokenGenerator().check_token(user, context.get("token"))
             raise ValidationError("Token is not valid")
 
 
@@ -167,12 +179,7 @@ class ResetForgotPassword(APIView):
                 "token": token,
             },
         )
-        serializer.is_valid(
-            raise_exception=True,
-            data=request.data,
-            context={"uid": uid, "token": token},
-        )
-
+        serializer.is_valid(raise_exception=True)
         return Response(data={"message": "Passowrd reset successfully!"})
 
 
@@ -183,3 +190,33 @@ class ForgotPasswordAPI(APIView):
         )
         serializer.is_valid(raise_exception=True)
         return Response(data={"message": "Password reset link sended to email"})
+
+
+class TokenValidationAPI(viewsets.ViewSet):
+    def validate_password_reset_token(self, request: HttpRequest):
+        try:
+            request_params = request.GET
+            user_id = smart_str(urlsafe_base64_decode(request_params.get("uid")))
+            user = User.objects.filter(id=user_id).first()
+
+            if not user:
+                return Response(
+                    data={"message": "Token is not valid"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            token = request_params.get("token")
+            if not PasswordResetTokenGenerator().check_token(user, token):
+                return Response(
+                    data={"message": "Token is not valid"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            return Response(
+                data={"message": "Token is valid"}, status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                data={"message": "Token is not valid", "exe": e},
+                status=status.HTTP_403_FORBIDDEN,
+            )

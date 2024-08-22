@@ -7,11 +7,16 @@ from .api import (
     UserProfileDetail,
     ResetForgotPassword,
     ForgotPasswordAPI,
+    TokenValidationAPI,
 )
 
 urlpatterns = [
     path("api/user/login", LoginViewSet.as_view({"post": "jwt_login"})),
     path("api/user/update/password", LoginViewSet.as_view({"put": "update_password"})),
+    path(
+        "api/token/password-reset/validate",
+        TokenValidationAPI.as_view({"get": "validate_password_reset_token"}),
+    ),
     path("api/user/register", RegisterUser.as_view()),
     path("api/user/detail", UserProfileDetail.as_view()),
     path("user/login/history", UserLoginLogs.as_view()),
