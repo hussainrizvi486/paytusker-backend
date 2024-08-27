@@ -119,13 +119,10 @@ class PasswordResetEmailSerializer(serializers.Serializer):
             user = User.objects.get(email=attrs.get("email"))
             token = generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.id))
-
-            # reset_url = (
-            #     f"https://paytusker.com/login/password/reset?uid={uid}&token={token}"
-            # )
             reset_url = (
-                f"http://localhost:5173/login/password/reset?uid={uid}&token={token}"
+                f"https://paytusker.com/login/password/reset?uid={uid}&token={token}"
             )
+
             message = render_to_string(
                 "email/password_reset_email.html",
                 {
