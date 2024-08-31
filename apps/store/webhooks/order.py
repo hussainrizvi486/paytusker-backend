@@ -9,7 +9,12 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from apps.store.models import PaymentEntry, Product
-from apps.store.models.order import Order, validated_status, OrderItems
+from apps.store.models.order import (
+    Order,
+    validated_status,
+    OrderItems,
+    OrderStatusChoices,
+)
 from apps.store.models.customer import Customer, Cart
 from server import settings
 
@@ -63,7 +68,7 @@ class StripeOrderPaymentWebhook(APIView):
             customer = Customer.objects.get(id=data.get("customer_id"))
             order_object = Order.objects.create(
                 customer=customer,
-                order_status=Order.StatusChoices.ORDER_PENDING,
+                order_status=OrderStatusChoices.ORDER_PENDING,
                 payment_status=True,
                 payment_method=data.get("payment_method"),
             )
@@ -94,6 +99,8 @@ class StripeOrderPaymentWebhook(APIView):
                     payload, sig_header, settings.STRIPE_END_SECRECT_KEY
                 )
                 if event.type == "checkout.session.completed":
+
+                    print("request recieved")
                     metadata: dict = event["data"]["object"]["metadata"]
                     order_object = {
                         "items": json.loads(metadata.get("items")),
@@ -101,10 +108,13 @@ class StripeOrderPaymentWebhook(APIView):
                         "customer_id": metadata.get("customer_id"),
                         "delivery_address": metadata.get("delivery_address"),
                     }
+                    print(order_object)
                     order_queryset = self.make_customer_order(order_object)
 
                     if order_queryset:
                         self.make_payment_entry(order_queryset)
+
+                    print(order_queryset)
 
                     return Response(
                         data={

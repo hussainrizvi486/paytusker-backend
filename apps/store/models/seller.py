@@ -17,11 +17,3 @@ class Seller(BaseProfile):
             UserRoles.objects.create(user=self.user, role=UserRoles.RoleChoices.SELLER)
         return super().save(*args, **kwargs)
 
-
-class SellerOrder(BaseModel):
-    seller = models.ForeignKey(Seller, on_delete=models.CASCADE)
-    # item = models.ForeignKey(Product, on_delete=models.CASCADE)
-    rate = models.DecimalField(decimal_places=2, max_digits=12)
-    quantity = models.DecimalField(decimal_places=2, max_digits=12)
-    amount = models.DecimalField(decimal_places=2, max_digits=12)
-    # status = models.CharField(choices=ORDER_STATUS)

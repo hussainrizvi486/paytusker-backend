@@ -66,13 +66,3 @@ class UserAddress(BaseModel):
     city = models.CharField(max_length=200, null=True)
     default = models.BooleanField(default=False)
 
-
-# from django.db.models.signals import post_save
-# from django.dispatch import receiver
-
-
-# @receiver([post_save], sender=UserAddress)
-# def set_default_address(sender, instance, created=None, *args, **kwargs):
-#     user = instance.user
-#     UserAddress.objects.
-# instance.user

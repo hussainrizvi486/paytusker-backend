@@ -67,7 +67,6 @@ class Product(BaseModel):
             storage, path = self.cover_image.storage, self.cover_image.path
             super(Product, self).delete(*args, **kwargs)
             storage.delete(path)
-
         super(Product, self).delete(*args, **kwargs)
 
     def get_product_images(self, request=None):
@@ -95,7 +94,7 @@ class Product(BaseModel):
         else:
             self.commission_rate = Decimal(0)
 
-        self.price = self.net_price + ((self.commission_rate / 100) * self.net_price)
+        self.price = self.net_price + ((self.net_price / 100) * self.commission_rate)
         self.product_price = self.price
         self.price = self.price - ((self.price / 100) * self.discount_percentage)
         return super().save(*args, **kwargs)
