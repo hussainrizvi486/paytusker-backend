@@ -45,12 +45,14 @@ webhooks = [
     ),
 ]
 
+from .api.order import make_seller_orders
 urlpatterns = [
     path("api/product/template/list", ProductTemplateList.as_view()),
     path("api/seller/product", ProductAPIView.as_view()),
     path("api/category/list", CategoryList.as_view()),
     
     # path("webhooks/payment/orders", order_payment_confirm_webhook),
+    path("test/orders", make_seller_orders),
     path(
         "api/product/details",
         ProductsApi.as_view({"get": "get_product_detail"}),

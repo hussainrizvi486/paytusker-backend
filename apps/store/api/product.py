@@ -248,31 +248,18 @@ class ProductsListPagination(PageNumberPagination):
 
 class ProductsApi(ViewSet):
     def get_home_page_products(self, request):
-        home_sections = ["Just For You", "Explore Digital Products"]
-        products_data = {
-            "Just For You": Product.objects.list_queryset().order_by("?")[0:24],
-            # "Explore Digital Products": Product.objects.list_queryset().filter(
-            #     is_digital=True
-            # )[0:20],
-        }
-
-        for key in products_data.keys():
-            products_data[key] = ProductListSerializer(
-                products_data.get(key), many=True, context={"request": request}
-            ).data
-
-        return Response(
-            data={
-                "home_products": products_data,
-                "digital_products": ProductListSerializer(
-                    Product.objects.list_queryset()
-                    .order_by("?")
-                    .filter(is_digital=True)[0:20],
-                    many=True,
-                    context={"request": request},
-                ).data,
-            }
+        products_queryset = (
+            Product.objects.list_queryset()
+            .select_related("category")
+            .filter(is_digital=True)
+            .order_by("-rating", "?")[:50]
         )
+
+        serialized_data = ProductListSerializer(
+            products_queryset, many=True, context={"request": request}
+        )
+
+        return Response(data={"digital_products": serialized_data.data})
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
@@ -445,7 +432,9 @@ class ProductsApi(ViewSet):
             return None
 
     def get_product_reviews(self, product_object):
-        product_reviews = OrderReview.objects.prefetch_related("customer").filter(product=product_object)
+        product_reviews = OrderReview.objects.prefetch_related("customer").filter(
+            product=product_object
+        )
         reviews_data = []
 
         for obj in product_reviews:

@@ -45,7 +45,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "id"]
 
 
-# @admin.site.register(Order)
 class OrderAdmin(BaseModelAdmin):
     class OrderItemInline(admin.TabularInline):
         model = OrderItems

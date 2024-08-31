@@ -374,3 +374,47 @@ def order_payment_confirm_webhook(request):
         return HttpResponse(status=200)
 
     return HttpResponse(status=400)
+
+
+from rest_framework.decorators import api_view
+
+
+@api_view()
+def make_seller_orders(req):
+    id = "54d9deed-222f-48a4-b4e4-5ce6cdc3abc1"
+    order_items = OrderItems.objects.filter(order__id=id).select_related(
+        "item__seller", "order__delivery_address", "order__customer"
+    )
+
+    seller_wise_orders = {}
+    for row in order_items:
+        seller = row.item.seller.id
+        if seller in seller_wise_orders.keys():
+            seller_wise_orders[seller]["items"].append(
+                {
+                    "qty": row.qty,
+                    "product": row.item.id,
+                    "rate": row.item.net_price,
+                }
+            )
+            seller_wise_orders[seller]["order_items"].append(row.id)
+        else:
+            seller_wise_orders[seller] = {
+                "order_id": row.order.id,
+                "order_date": row.order.order_date,
+                "delivery_address": (
+                    row.order.delivery_address.id
+                    if row.order.delivery_address
+                    else None
+                ),
+                "customer": row.order.customer.id,
+                "order_items": [row.id],
+                "items": [
+                    {
+                        "product": row.item.id,
+                        "qty": row.qty,
+                        "rate": row.item.net_price,
+                    }
+                ],
+            }
+    # print(seller_wise_orders)

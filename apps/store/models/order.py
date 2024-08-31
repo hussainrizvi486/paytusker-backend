@@ -2,7 +2,8 @@ from django.db import models
 from django.db.models import Avg
 from datetime import timedelta
 
-from . import UserAddress, Product, BaseModel
+from . import UserAddress, Product, BaseModel, Seller
+from django.contrib.postgres.fields import ArrayField
 from .customer import Customer
 from server.utils import generate_snf_id
 
@@ -10,15 +11,16 @@ from server.utils import generate_snf_id
 validated_status = ["001", "002", "003", "004", "005", "006"]
 
 
-class Order(BaseModel):
-    class StatusChoices(models.TextChoices):
-        ORDER_PENDING = "001", "Order Pending"
-        ORDER_CONFIRMED = "002", "Order Confirmed"
-        IN_PROCESS = "003", "In Process"
-        SHIPPING = "004", "Shipping"
-        DELIVERED = "005", "Delivered"
-        CANCELLED = "006", "Cancelled"
+class OrderStatusChoices(models.TextChoices):
+    ORDER_PENDING = "001", "Order Pending"
+    ORDER_CONFIRMED = "002", "Order Confirmed"
+    IN_PROCESS = "003", "In Process"
+    SHIPPING = "004", "Shipping"
+    DELIVERED = "005", "Delivered"
+    CANCELLED = "006", "Cancelled"
 
+
+class Order(BaseModel):
     order_id = models.CharField(
         default=generate_snf_id, unique=True, max_length=999, editable=True
     )
@@ -26,17 +28,17 @@ class Order(BaseModel):
     order_date = models.DateField(auto_now_add=True)
     delivery_date = models.DateField(null=True, blank=True)
     order_status = models.CharField(
-        choices=StatusChoices.choices,
+        choices=OrderStatusChoices.choices,
         null=True,
         blank=True,
-        max_length=999,
+        max_length=50,
     )
     delivery_status = models.BooleanField(default=False)
     payment_status = models.BooleanField(default=False)
     payment_method = models.CharField(
         null=True,
         blank=True,
-        max_length=999,
+        max_length=99,
     )
     total_qty = models.DecimalField(
         default=1, decimal_places=2, max_digits=12, blank=True
@@ -80,14 +82,6 @@ class Order(BaseModel):
 
 
 class OrderItems(BaseModel):
-    class StatusChoices(models.TextChoices):
-        ORDER_PENDING = "001", "Order Pending"
-        ORDER_CONFIRMED = "002", "Order Confirmed"
-        IN_PROCESS = "003", "In Process"
-        SHIPPING = "004", "Shipping"
-        DELIVERED = "005", "Delivered"
-        CANCELLED = "006", "Cancelled"
-
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="order_items"
     )
@@ -101,14 +95,14 @@ class OrderItems(BaseModel):
     amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
     has_review = models.BooleanField(default=False)
     status = models.CharField(
-        choices=StatusChoices.choices,
+        choices=OrderStatusChoices.choices,
         null=True,
         blank=True,
         max_length=999,
     )
 
     def __str__(self) -> str:
-        return self.order.order_id
+        return f"{self.order.order_id} {self.item.product_name} {self.rate}"
 
     def save(self, *args, **kwargs):
         if self.rate:
@@ -137,11 +131,45 @@ class OrderReview(BaseModel):
         return super().save(*args, **kwargs)
 
 
-class CustomersOrdersHistory(models.Model):
-    customer = models.CharField(max_length=999)
-    order_id = models.CharField(max_length=999)
-    total_amount = models.CharField(max_length=999)
-    total_qty = models.CharField(max_length=999)
-    payment_method = models.CharField(max_length=999)
-    delivery_status = models.CharField(max_length=999)
-    delivery_address = models.CharField(max_length=999)
+class SellerOrder(BaseModel):
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
+    order_date = models.DateField(auto_now_add=True)
+    status = models.CharField(
+        choices=OrderStatusChoices.choices,
+        default=OrderStatusChoices.ORDER_PENDING,
+        null=True,
+        blank=True,
+        max_length=50,
+    )
+    delivery_date = models.DateField(null=True, blank=True)
+    delivery_address = models.ForeignKey(
+        UserAddress, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    order_id = models.CharField(max_length=10000)
+    order_items = ArrayField(models.CharField(max_length=999))
+    shipping_id = models.CharField(max_length=10000)
+    total = models.DecimalField(decimal_places=2, max_digits=11)
+
+    def __str__(self) -> str:
+        return f"seller order {self.order_id} from {self.seller.seller_name} on {self.order_date}"
+
+    def update_status(self):
+        if self.order_items:
+            orderitems = OrderItems.objects.filter(id__in=self.order_items)
+            for obj in orderitems:
+                obj.status = self.status
+                obj.save()
+
+    def save(self, *args, **kwargs):
+        self.update_status()
+        super().save(self, *args, **kwargs)
+
+
+class SellerOrderItems(BaseModel):
+    order = models.ForeignKey(SellerOrder, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rate = models.DecimalField(decimal_places=2, max_digits=11)
+    qty = models.DecimalField(decimal_places=2, max_digits=11)
+    amount = models.DecimalField(decimal_places=2, max_digits=11)
+
