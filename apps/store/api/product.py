@@ -507,6 +507,21 @@ class ProductCategory(ViewSet):
             "Men's Clothes",
             "Headphones",
         ]
+        digital_order = [
+            "Apps",
+            "HTML Template",
+            "Course",
+            "Word Press Plugin",
+            "Software Programs",
+            "Photography",
+            "Recipes",
+            "Music",
+            "eBooks",
+            "Graphics",
+            "Coaching",
+            "Arts & Crafts",
+        ]
+
         physical = Category.objects.filter(digital=False).order_by(
             models.Case(
                 *[
@@ -517,7 +532,14 @@ class ProductCategory(ViewSet):
         )[:12]
 
         # physical = Category.objects.filter(digital=False)[:12]
-        digital = Category.objects.filter(digital=True)[:12]
+        digital = Category.objects.filter(digital=True).order_by(
+            models.Case(
+                *[
+                    models.When(name=name, then=pos)
+                    for pos, name in enumerate(digital_order)
+                ]
+            )
+        )[:12]
 
         category_data = {
             "physical": CategoryListSerializer(
