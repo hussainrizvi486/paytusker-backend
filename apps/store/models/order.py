@@ -172,4 +172,3 @@ class SellerOrderItems(BaseModel):
     rate = models.DecimalField(decimal_places=2, max_digits=11)
     qty = models.DecimalField(decimal_places=2, max_digits=11)
     amount = models.DecimalField(decimal_places=2, max_digits=11)
-

@@ -252,14 +252,28 @@ class ProductsApi(ViewSet):
             Product.objects.list_queryset()
             .select_related("category")
             .filter(is_digital=True)
-            .order_by("-rating", "?")[:50]
+            .order_by("-rating", "?")[:24]
         )
 
         serialized_data = ProductListSerializer(
             products_queryset, many=True, context={"request": request}
         )
 
-        return Response(data={"digital_products": serialized_data.data})
+        products2 = ProductListSerializer(
+            Product.objects.list_queryset()
+            .select_related("category")
+            .filter(is_digital=True)
+            .order_by("-rating", "?")[:24],
+            many=True,
+            context={"request": request},
+        )
+
+        return Response(
+            data={
+                "digital_products": serialized_data.data,
+                "home_products": products2.data,
+            }
+        )
 
     def get_product_detail(self, request):
         product_id = request.GET.get("id")
@@ -507,6 +521,7 @@ class ProductCategory(ViewSet):
             "Men's Clothes",
             "Headphones",
         ]
+
         digital_order = [
             "Apps",
             "HTML Template",
@@ -522,13 +537,16 @@ class ProductCategory(ViewSet):
             "Arts & Crafts",
         ]
 
-        physical = Category.objects.filter(digital=False).order_by(
-            models.Case(
-                *[
-                    models.When(name=name, then=pos)
-                    for pos, name in enumerate(physical_order)
-                ]
-            )
+        # physical = Category.objects.filter(digital=False).order_by(
+        #     models.Case(
+        #         *[
+        #             models.When(name=name, then=pos)
+        #             for pos, name in enumerate(physical_order)
+        #         ]
+        #     )
+        # )[:12]
+        physical = Category.objects.filter(digital=True).exclude(
+            name__in=digital_order
         )[:12]
 
         # physical = Category.objects.filter(digital=False)[:12]
