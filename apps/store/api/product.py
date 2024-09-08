@@ -528,7 +528,7 @@ class ProductCategory(ViewSet):
             "Course",
             "Word Press Plugin",
             "Software Programs",
-            "Photography",
+            # "Photography",
             "Recipes",
             "Music",
             "eBooks",
