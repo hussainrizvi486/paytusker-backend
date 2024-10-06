@@ -1,17 +1,30 @@
 from django.contrib import admin
-from apps.store.models.base import StoreErrorLogs, UserAddress
+from apps.store.models.orders import (
+    SellerDigitalOrder,
+    SellerDigitalOrderItem,
+    SellerOrder,
+    SellerOrderItem,
+)
 from apps.store.models.product import (
     Product,
     ProductMedia,
     ProductVariantAttribute,
     ProductCategoryCommission,
     ProductDiscount,
+)
+from apps.store.models.order import DigitalOrder, DigitalOrderItem, OrderCancellation
+from apps.store.models import (
+    PaymentEntry,
     Seller,
+    Category,
+    UserAddress,
+    ModelMedia,
+    Customer,
+    Cart,
+    CartItem,
 )
 
-from apps.store.models import PaymentEntry
-from apps.store.models.common import Category, ModelMedia
-from apps.store.models.customer import Customer, Cart, CartItem
+
 from apps.store.models.order import Order, OrderItems, OrderReview
 
 
@@ -32,7 +45,7 @@ class ProductVariantAttributeInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     list_filter = ["disabled", "creation", "category"]
-    list_display = ["product_name", "price", "item_type", "rating"]
+    list_display = ["product_name", "is_digital", "price", "item_type", "rating"]
     ordering = ["-modified"]
     inlines = [
         ProductImageInline,
@@ -54,11 +67,51 @@ class OrderAdmin(BaseModelAdmin):
     inlines = [OrderItemInline]
 
 
+@admin.register(DigitalOrder)
+class DigitalOrderAdmin(BaseModelAdmin):
+    class ItemInline(admin.TabularInline):
+        model = DigitalOrderItem
+
+    inlines = [ItemInline]
+
+
+class SellerOrderAdmin(BaseModelAdmin):
+    class ItemsInline(admin.TabularInline):
+        model = SellerOrderItem
+
+    list_display = [
+        "grand_total",
+        "status",
+        "order_date",
+        "customer",
+        "seller",
+    ]
+    inlines = [ItemsInline]
+
+
+class DigitalOrderAdmin(BaseModelAdmin):
+    class ItemsInline(admin.TabularInline):
+        model = SellerDigitalOrderItem
+
+    list_display = [
+        "grand_total",
+        "status",
+        "order_date",
+        "customer",
+        "seller",
+    ]
+    inlines = [ItemsInline]
+
+
+admin.site.register(SellerDigitalOrder, DigitalOrderAdmin)
+
+admin.site.register(SellerOrder, SellerOrderAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(PaymentEntry)
 
 admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductDiscount)
+admin.site.register(OrderCancellation)
 admin.site.register(ProductCategoryCommission)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(OrderItems)
@@ -67,6 +120,5 @@ admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(OrderReview)
 admin.site.register(ModelMedia)
-admin.site.register(StoreErrorLogs)
 admin.site.register(Seller)
 admin.site.register(UserAddress)

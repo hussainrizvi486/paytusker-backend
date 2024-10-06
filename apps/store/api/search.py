@@ -5,30 +5,29 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from apps.store.serializers import ProductListSerializer
-from apps.store.models import (
+from apps.store.models.product import (
     Product,
     ProductVariantAttribute,
 )
 from apps.store.pagination import ProductsListPagination
-from server.utils import load_request_body
+from server.utils import parse_json
 
 
 class SearchProductsApi(APIView):
     def get(self, request: HttpRequest):
         query = request.GET.get("query")
         category_id = request.GET.get("category")
-        filters = load_request_body(request.GET.get("filters", {}))
-        products_queryset = None
+        filters = parse_json(request.GET.get("filters", {}))
+        products_queryset: models.QuerySet[Product] = None
         pagniator = ProductsListPagination()
 
         if not query and not category_id:
             return Response(data="Please enter a query or category id")
-
         if query:
             query = str(query).strip()
             vector = SearchVector("product_name")
             search_query = SearchQuery(query)
-            products_queryset: models.QuerySet[Product] = (
+            products_queryset = (
                 Product.objects.list_queryset()
                 .prefetch_related("category")
                 .annotate(rank=SearchRank(vector=vector, query=search_query))
@@ -79,6 +78,7 @@ class SearchProductsApi(APIView):
                 products_data = ProductListSerializer(
                     products_res, many=True, context={"request": request}
                 )
+
                 return pagniator.get_paginated_response(
                     products_data.data, {"filters_attributes": filters_attributes}
                 )
@@ -91,6 +91,7 @@ class SearchProductsApi(APIView):
         )
         attribute_object = {}
         serialized_variant_queryset = []
+
         for attr in variant_queryset:
             serialized_variant_queryset.append(
                 {

@@ -1,14 +1,12 @@
+from datetime import timedelta
+from django.utils import timezone
 from django.db import models
 from django.db.models import Avg
-from datetime import timedelta
 
-from . import UserAddress, Product, BaseModel, Seller
-from django.contrib.postgres.fields import ArrayField
-from .customer import Customer
+from .product import Product
 from server.utils import generate_snf_id
-
-
-validated_status = ["001", "002", "003", "004", "005", "006"]
+from . import UserAddress, BaseModel, Customer
+from .choices import DigitalOrderStatusChoices
 
 
 class OrderStatusChoices(models.TextChoices):
@@ -18,6 +16,7 @@ class OrderStatusChoices(models.TextChoices):
     SHIPPING = "004", "Shipping"
     DELIVERED = "005", "Delivered"
     CANCELLED = "006", "Cancelled"
+    Refunded = "007", "Refunded"
 
 
 class Order(BaseModel):
@@ -113,62 +112,103 @@ class OrderItems(BaseModel):
 
 class OrderReview(BaseModel):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    order_item = models.ForeignKey(OrderItems, on_delete=models.CASCADE, null=True)
+    order_type = models.CharField(max_length=999, null=True, blank=True)
+    order = models.CharField(max_length=999)
+    order_id = models.CharField(max_length=999)
+    order_item = models.CharField(max_length=999)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     rating = models.FloatField()
     review_content = models.TextField()
 
     def __str__(self) -> str:
-        return f"{self.customer.customer_name}-{self.order.order_id}"
+        return f"{self.customer.customer_name}-{self.order}"
 
-    def save(self, *args, **kwargs):
-        total_rating = OrderReview.objects.filter(product=self.product).aggregate(
-            Avg("rating", default=0)
-        )
-        self.product.rating = total_rating.get("rating__avg") or 0
-        self.product.save()
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     total_rating = OrderReview.objects.filter(product=self.product).aggregate(
+    #         Avg("rating", default=0)
+    #     )
+    #     self.product.rating = total_rating.get("rating__avg") or 0
+    #     self.product.save()
+    #     return super().save(*args, **kwargs)
 
 
-class SellerOrder(BaseModel):
-    seller = models.ForeignKey(Seller, on_delete=models.CASCADE)
+class DigitalOrder(BaseModel):
+    order_id = models.CharField(
+        default=generate_snf_id, unique=True, max_length=999, editable=True
+    )
     customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
     order_date = models.DateField(auto_now_add=True)
-    status = models.CharField(
-        choices=OrderStatusChoices.choices,
-        default=OrderStatusChoices.ORDER_PENDING,
+    order_status = models.CharField(
+        choices=DigitalOrderStatusChoices.choices,
+        default=DigitalOrderStatusChoices.PLACED,
         null=True,
         blank=True,
         max_length=50,
     )
-    delivery_date = models.DateField(null=True, blank=True)
-    delivery_address = models.ForeignKey(
-        UserAddress, null=True, blank=True, on_delete=models.SET_NULL
+    payment_status = models.BooleanField(default=False)
+    payment_method = models.CharField(
+        null=True,
+        blank=True,
+        max_length=99,
     )
-    order_id = models.CharField(max_length=10000)
-    order_items = ArrayField(models.CharField(max_length=999))
-    shipping_id = models.CharField(max_length=10000)
-    total = models.DecimalField(decimal_places=2, max_digits=11)
+    total_qty = models.DecimalField(
+        default=1, decimal_places=2, max_digits=12, blank=True
+    )
+    grand_total = models.DecimalField(
+        decimal_places=2, max_digits=12, null=True, blank=True
+    )
 
     def __str__(self) -> str:
-        return f"seller order {self.order_id} from {self.seller.seller_name} on {self.order_date}"
+        return f"{self.customer} {self.order_id}"
 
-    def update_status(self):
-        if self.order_items:
-            orderitems = OrderItems.objects.filter(id__in=self.order_items)
-            for obj in orderitems:
-                obj.status = self.status
-                obj.save()
+    def calulate_total(self):
+        # if hasattr(self, "items"):
+        self.total_qty = sum(item.qty for item in self.items.all())
+        self.grand_total = sum(item.amount for item in self.items.all())
 
     def save(self, *args, **kwargs):
-        self.update_status()
-        super().save(self, *args, **kwargs)
+        self.calulate_total()
+        super().save(*args, **kwargs)
 
 
-class SellerOrderItems(BaseModel):
-    order = models.ForeignKey(SellerOrder, on_delete=models.CASCADE)
+class DigitalOrderItem(BaseModel):
+    order = models.ForeignKey(
+        DigitalOrder, on_delete=models.CASCADE, related_name="items"
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    rate = models.DecimalField(decimal_places=2, max_digits=11)
-    qty = models.DecimalField(decimal_places=2, max_digits=11)
-    amount = models.DecimalField(decimal_places=2, max_digits=11)
+    qty = models.DecimalField(
+        default=1,
+        decimal_places=2,
+        max_digits=12,
+    )
+    rate = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
+    amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
+    reviewed_by_customer = models.BooleanField(default=False)
+    status = models.CharField(
+        choices=DigitalOrderStatusChoices.choices,
+        default=DigitalOrderStatusChoices.PLACED,
+        null=True,
+        blank=True,
+        max_length=999,
+    )
+
+    def __str__(self) -> str:
+        return f"{self.order}"
+
+    def save(self, *args, **kwargs):
+        self.amount = self.rate * self.qty
+        super().save(*args, **kwargs)
+
+
+class OrderCancellation(models.Model):
+    order_id = models.CharField(max_length=299)
+    cancelled_by = models.CharField(max_length=200, null=True, blank=True)
+    cancellation_reason = models.CharField(max_length=1000)
+    notes = models.TextField()
+    cancelled_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.order} cancelled by {self.cancelled_by}"
+
+    class Meta:
+        ordering = ["-cancelled_at"]

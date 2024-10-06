@@ -1,5 +1,6 @@
 from rest_framework import generics, serializers
-from apps.store.models import Category, Product
+from apps.store.models import Category
+from apps.store.models.product import Product
 from apps.store.serializers import CategoryListSerializer
 
 

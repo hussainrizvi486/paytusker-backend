@@ -1,5 +1,5 @@
 from django.db import models
-from .base import BaseModel
+from . import BaseModel
 
 
 class Category(BaseModel):
@@ -12,6 +12,7 @@ class Category(BaseModel):
         if self.parent is None:
             return self.name
         return f"{self.parent} --> {self.name}"
+
 
 class ModelMedia(models.Model):
     model_name = models.CharField(max_length=999)

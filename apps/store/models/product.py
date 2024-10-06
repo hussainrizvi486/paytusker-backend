@@ -1,12 +1,10 @@
 from typing import Any
-from django.db import models
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 from decimal import Decimal
-
-from .base import BaseModel
-from .common import Category
-from .seller import Seller
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from . import Seller, Category, BaseModel
+from server.overrides import ModelTextChoices
 
 
 class ProductManager(models.Manager):
@@ -15,6 +13,11 @@ class ProductManager(models.Manager):
 
 
 class Product(BaseModel):
+    class TypeChoices(ModelTextChoices):
+        NORMAL = "001", "Normal"
+        TEMPLATE = "002", "Template"
+        VARIANT = "003", "Variant"
+
     class ItemTypeChoices(models.TextChoices):
         TEMPLATE = "002", "Template"
         VARIANT = "003", "Variant"
@@ -56,7 +59,6 @@ class Product(BaseModel):
         default=0, decimal_places=2, max_digits=12, null=True, blank=True
     )
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE, null=True, blank=True)
-
     objects = ProductManager()
 
     def __str__(self) -> str:
@@ -78,7 +80,6 @@ class Product(BaseModel):
                     for row in self.productmedia_set.all()
                 ]
             else:
-
                 images_list = [row.file.url for row in self.productmedia_set.all()]
 
         if self.cover_image:
@@ -110,7 +111,6 @@ class ProductMedia(BaseModel):
     def delete(self, *args, **kwargs):
         if self.file:
             storage, path = self.file.storage, self.file.path
-            # super(ProductMedia, self).delete(*args, **kwargs)
             storage.delete(path)
 
         super(ProductMedia, self).delete(*args, **kwargs)
@@ -164,5 +164,4 @@ def update_product_commission(sender, instance, created=None, *args, **kwargs):
                 product.price = product.net_price + (
                     commission_rate / 100 * product.net_price
                 )
-
             Product.objects.bulk_update(products_queryset, ["commission_rate"])

@@ -1,6 +1,5 @@
-from typing import Iterable
 from django.db import models
-from .base import BaseModel, BaseProfile
+from . import BaseProfile
 from apps.auth_user.models import User, UserRoles
 
 
@@ -16,4 +15,3 @@ class Seller(BaseProfile):
         if not self.user.has_role(UserRoles.RoleChoices.SELLER):
             UserRoles.objects.create(user=self.user, role=UserRoles.RoleChoices.SELLER)
         return super().save(*args, **kwargs)
-

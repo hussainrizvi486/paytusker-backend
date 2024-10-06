@@ -10,15 +10,13 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
 from rest_framework import status
-
 from apps.store.utils import get_customer, get_serialized_model_media
 from apps.store.models.order import Order, OrderItems, OrderReview
 from apps.store.models.customer import CartItem, Cart, Customer
 from apps.store.models.product import Product
-from apps.store.models import ModelMedia, UserAddress, StoreErrorLogs
+from apps.store.models import ModelMedia, UserAddress
 from apps.store.permissions import IsCustomerUser
 from apps.store.pagination import ListQuerySetPagination
-from apps.store.erpnext import sync_order
 from server import settings
 
 
@@ -208,13 +206,11 @@ class CustomerFunctions(ViewSet):
         if OrderReview.objects.filter(
             product=product_id, customer=customer, order_item=order_item
         ).exists():
-
             return "Review already exists", False
         return "", True
 
     def add_order_review(self, request):
         req_data: dict = request.data
-
         if req_data:
             customer = get_customer(request.user)
             message, validated = self.check_review_data(req_data, customer)
@@ -241,6 +237,7 @@ class CustomerFunctions(ViewSet):
             review.save()
             order_item.has_review = True
             order_item.save()
+
             review_media_keys = filter(filter_media_keys, req_data.keys())
             if review_media_keys:
                 for key in review_media_keys:
@@ -323,98 +320,4 @@ class CustomerFunctions(ViewSet):
 
 @csrf_exempt
 def order_payment_confirm_webhook(request):
-    payload = request.body
-    event = None
-    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
-    if sig_header:
-        try:
-            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-            log = StoreErrorLogs.objects.create(log="stripe Event created")
-            log.save()
-
-            if event.type == "checkout.session.completed":
-                metadata = event["data"]["object"]["metadata"]
-                order_items = metadata["items"]
-                order_items = json.loads(order_items)
-
-                payment_method = metadata["payment_method"]
-                # delivery_address = Address.objects.get(id=metadata["delivery_address"])
-                customer = Customer.objects.get(id=metadata["customer_id"])
-
-                order_queryset = Order.objects.create(
-                    # delivery_address=delivery_address,
-                    payment_method=payment_method,
-                    order_status="001",
-                    payment_status=True,
-                    customer=customer,
-                )
-
-                for item in order_items:
-                    product = Product.objects.get(id=item.get("id"))
-                    OrderItems.objects.create(
-                        order=order_queryset,
-                        qty=Decimal(item.get("qty")),
-                        item=product,
-                    )
-
-                order_queryset.save()
-
-                Cart.objects.filter(customer=order_queryset.customer).delete()
-                try:
-                    sync_order(order_queryset)
-                except Exception as e:
-                    log1 = StoreErrorLogs.objects.create(log=str(e))
-                    log1.save()
-
-        except Exception as e:
-            return JsonResponse(
-                {"error": str(e), "trace back": str(traceback.format_exc())}
-            )
-
-        return HttpResponse(status=200)
-
-    return HttpResponse(status=400)
-
-
-from rest_framework.decorators import api_view
-
-
-@api_view()
-def make_seller_orders(req):
-    id = "54d9deed-222f-48a4-b4e4-5ce6cdc3abc1"
-    order_items = OrderItems.objects.filter(order__id=id).select_related(
-        "item__seller", "order__delivery_address", "order__customer"
-    )
-
-    seller_wise_orders = {}
-    for row in order_items:
-        seller = row.item.seller.id
-        if seller in seller_wise_orders.keys():
-            seller_wise_orders[seller]["items"].append(
-                {
-                    "qty": row.qty,
-                    "product": row.item.id,
-                    "rate": row.item.net_price,
-                }
-            )
-            seller_wise_orders[seller]["order_items"].append(row.id)
-        else:
-            seller_wise_orders[seller] = {
-                "order_id": row.order.id,
-                "order_date": row.order.order_date,
-                "delivery_address": (
-                    row.order.delivery_address.id
-                    if row.order.delivery_address
-                    else None
-                ),
-                "customer": row.order.customer.id,
-                "order_items": [row.id],
-                "items": [
-                    {
-                        "product": row.item.id,
-                        "qty": row.qty,
-                        "rate": row.item.net_price,
-                    }
-                ],
-            }
-    # print(seller_wise_orders)
+    pass

@@ -2,13 +2,14 @@ import json
 from rest_framework import views
 from typing import List, Dict
 from datetime import datetime
-from django.db.models.query import QuerySet
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from ...permissions import IsSellerUser
+
+# from ...permissions import IsSellerUser
 from ...utils import get_session_seller
 from ...pagination import ProductsListPagination
-from ...models import Product, Category
+from ...models import Category
+from apps.store.models.product import Product
 from ...serializers import (
     SellerProductListingSerializer,
     CategoryListSerializer,
@@ -32,8 +33,6 @@ def get_upload_product_data(request):
 
 
 class ListSellerProducts(views.APIView):
-    # serializer = SellerProductListingSerializer()
-
     def validate_search_filters(self, filters: dict) -> dict:
         q_filters = {}
         if filters.get("item_type"):

@@ -9,12 +9,8 @@ from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal
 from apps.store.serializers import ProductListSerializer, CategoryListSerializer
 from apps.store.models.order import OrderReview
-from apps.store.models import (
-    Product,
-    ProductMedia,
-    Category,
-    ProductVariantAttribute,
-)
+from apps.store.models.product import Product, ProductMedia, ProductVariantAttribute
+from apps.store.models import Category
 from apps.store.utils import (
     get_category,
     get_serialized_model_media,
@@ -216,9 +212,6 @@ class ProductAPIView(APIView):
             )
 
         except Exception as e:
-            import traceback
-
-            print(traceback.format_exc())
             return Response(
                 data=str(e),
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

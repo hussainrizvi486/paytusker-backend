@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -40,7 +41,6 @@ INSTALLED_APPS = [
     # installed frameworks
     "rest_framework_simplejwt",
     "rest_framework",
-    "corsheaders",
     "django_extensions",
     # Apps
     # "apps.accounts",
@@ -93,6 +93,7 @@ WSGI_APPLICATION = "server.wsgi.application"
 
 # REST FRAMEWORK
 REST_FRAMEWORK = {
+    "COERCE_DECIMAL_TO_STRING": False,
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -130,6 +131,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 # Media files
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 MEDIA_URL = "/media/"
+MEDIA_SERVER_URL = "https://crm.paytusker.com"
 
 
 # Default primary key field type
@@ -195,5 +197,3 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ["EMAIL_HOST"]
 EMAIL_HOST_PASSWORD = os.environ["EMAIL_PASSWORD"]
-
-

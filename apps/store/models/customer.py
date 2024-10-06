@@ -1,8 +1,7 @@
 from django.db import models
-
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
-from .base import BaseModel
+from . import BaseModel
 from .product import Product
 from apps.auth_user.models import User, UserRoles
 
@@ -16,7 +15,9 @@ class Customer(BaseModel):
 
     def save(self, *args, **kwargs) -> None:
         if not self.user.has_role(UserRoles.RoleChoices.CUSTOMER):
-            UserRoles.objects.create(user=self.user, role=UserRoles.RoleChoices.CUSTOMER)
+            UserRoles.objects.create(
+                user=self.user, role=UserRoles.RoleChoices.CUSTOMER
+            )
         return super().save(*args, **kwargs)
 
 
@@ -41,7 +42,9 @@ class Cart(BaseModel):
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-    item = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, null=True, blank=True
+    )
     qty = models.DecimalField(
         default=1,
         decimal_places=2,
@@ -51,7 +54,7 @@ class CartItem(BaseModel):
     amount = models.DecimalField(decimal_places=2, max_digits=12, null=True, blank=True)
 
     def save(self, *args, **kwargs) -> None:
-        self.rate = self.item.price
+        self.rate = self.product.price
         self.amount = self.qty * self.rate
         return super().save(*args, **kwargs)
 

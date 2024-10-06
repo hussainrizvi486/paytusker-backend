@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from apps.store.models import Product, Category
+from apps.store.models import Category
+from apps.store.models.product import Product
 from server.utils import format_currency
-from datetime import datetime
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -53,13 +53,9 @@ class AmendProductSerailizer(serializers.ModelSerializer):
 class CategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "name", "image"]
+        fields = ["id", "name", "image", "parent", "digital"]
 
     def get_image(self, obj):
-        request = self.context.get("request")
-        if request and obj.image:
-            return request.build_absolute_uri(obj.image.url)
-
         return obj.image.url or None
 
 

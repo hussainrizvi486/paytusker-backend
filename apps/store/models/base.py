@@ -1,4 +1,3 @@
-from typing import Iterable
 from django.db import models
 from uuid import uuid4
 from apps.auth_user.models import User
@@ -31,12 +30,6 @@ class CurrencyChoices(models.TextChoices):
     MYR = "MYR", "Malaysian Ringgit"
 
 
-class StoreErrorLogs(models.Model):
-    log = models.TextField()
-
-    def __str__(self) -> str:
-        return self.log
-
 class BaseModel(models.Model):
     id = models.CharField(
         default=uuid4, unique=True, editable=False, primary_key=True, max_length=10000
@@ -66,3 +59,5 @@ class UserAddress(BaseModel):
     city = models.CharField(max_length=200, null=True)
     default = models.BooleanField(default=False)
 
+    def __str__(self) -> str:
+        return f"{self.address_title} - {self.address_line}, {self.city}, {self.state}, {self.country} ({'Default' if self.default else 'Secondary'})"

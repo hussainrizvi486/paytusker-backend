@@ -2,7 +2,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, views
 
-from ..models import UserAddress, User
+from ..models import UserAddress
+from apps.auth_user.models import User
+
 from ..serializers import UserAddressSerializer
 from server.utils import load_request_body
 

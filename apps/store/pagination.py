@@ -24,13 +24,28 @@ class ProductsListPagination(PageNumberPagination):
         return Response(response_dict)
 
 
-# Common Pagination
 class ListQuerySetPagination(PageNumberPagination):
     def __init__(self, page_size=10) -> None:
         self.page_size = page_size
         super().__init__()
 
-    def get_paginated_response(self, data, options={}):
+    def get_pagination_details(self):
+        return {
+            "page_links": {
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+            },
+            "total_records_count": self.page.paginator.count,
+            "total_pages": self.page.paginator.num_pages,
+            "page_size": self.page_size,
+            "current_page": self.page.number,
+        }
+
+    def get_paginated_response(
+        self,
+        data,
+        options={},
+    ):
         response_dict = {
             "links": {
                 "next": self.get_next_link(),

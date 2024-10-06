@@ -28,7 +28,7 @@ class CartApi(ViewSet):
             )
         cart, created = Cart.objects.get_or_create(customer=customer)
         try:
-            cart_item = CartItem.objects.get(item=product, cart=cart)
+            cart_item = CartItem.objects.get(product=product, cart=cart)
             cart_item_qty = Decimal(cart_item.qty)
             cart_item.qty += qty
             cart_item.rate = product.price
@@ -37,7 +37,7 @@ class CartApi(ViewSet):
 
         except CartItem.DoesNotExist:
             new_cart_item = CartItem.objects.create(
-                item=product,
+                product=product,
                 cart=cart,
                 rate=product.price,
                 qty=qty,
@@ -56,7 +56,7 @@ class CartApi(ViewSet):
         if not cart_object:
             return Response(data=user_cart_data)
 
-        cart_items_queryset = CartItem.objects.prefetch_related("item").filter(
+        cart_items_queryset = CartItem.objects.prefetch_related("product").filter(
             cart=cart_object
         )
         if cart_items_queryset:
@@ -66,14 +66,14 @@ class CartApi(ViewSet):
                     {
                         "id": item.id,
                         "qty": item.qty,
-                        "product_id": item.item.id,
+                        "product_id": item.product.id,
                         "rate": item.rate,
                         "amount": item.amount,
                         "formatted_amount": item.amount,
                         "formatted_rate": item.rate,
-                        "product_name": item.item.product_name,
+                        "product_name": item.product.product_name,
                         "cover_image": self.request.build_absolute_uri(
-                            item.item.cover_image.url
+                            item.product.cover_image.url
                         ),
                     }
                 )

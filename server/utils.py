@@ -3,6 +3,7 @@ from django.db import connection
 from django.utils import timezone
 from django.http import QueryDict
 from snowflake import SnowflakeGenerator
+from server import settings
 
 
 def exceute_sql_query(query: str, serialized=True):
@@ -54,3 +55,21 @@ def load_request_body(data):
         return json.loads(body)
     except Exception:
         return body
+
+
+def parse_json(data):
+    if isinstance(data, QueryDict):
+        return data.dict()
+
+    if isinstance(data, (str, bytes)):
+        try:
+            return json.loads(data)
+        except json.JSONDecodeError:
+            pass
+    return data
+
+
+def get_media_url(url: str) -> str:
+    if settings.MEDIA_SERVER_URL:
+        return settings.MEDIA_SERVER_URL + url
+    return url
