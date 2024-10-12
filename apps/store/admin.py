@@ -5,6 +5,8 @@ from apps.store.models.orders import (
     SellerOrder,
     SellerOrderItem,
 )
+
+from apps.store.models.seller import SellerProfileRequest
 from apps.store.models.product import (
     Product,
     ProductMedia,
@@ -33,6 +35,22 @@ admin.site.site_header = "Paytukser Core Administration"
 
 class BaseModelAdmin(admin.ModelAdmin):
     ordering = ["-modified"]
+
+
+@admin.register(SellerProfileRequest)
+class SellerProfileRequestAdmin(BaseModelAdmin):
+    list_display = [
+        "request_status",
+        "full_name",
+        "store_name",
+        "contact_number",
+        "email",
+        "address",
+        "city",
+        "country",
+    ]
+
+    list_filter = ["request_status", "request_date"]
 
 
 class ProductImageInline(admin.TabularInline):

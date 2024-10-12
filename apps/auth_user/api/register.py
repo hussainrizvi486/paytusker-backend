@@ -27,7 +27,7 @@ class RegisterUser(views.APIView):
         email_exists = User.objects.filter(email=user_object.get("email")).exists()
         if email_exists:
             return Response(
-                f"The email is already in use.", status=status.HTTP_403_FORBIDDEN
+                "The email is already in use.", status=status.HTTP_403_FORBIDDEN
             )
 
         phone_exists = User.objects.filter(
@@ -36,7 +36,7 @@ class RegisterUser(views.APIView):
 
         if phone_exists:
             return Response(
-                f"The phone number is already in use.", status=status.HTTP_403_FORBIDDEN
+                "The phone number is already in use.", status=status.HTTP_403_FORBIDDEN
             )
 
         user = User.objects.create_user(
@@ -51,9 +51,8 @@ class RegisterUser(views.APIView):
         user.save()
         UserRoles.objects.create(user=user, role="customer")
         from apps.store.models.customer import Customer
-
         if user:
-            customer = Customer.objects.create(
+            Customer.objects.create(
                 user=user, customer_name=f"{user.first_name} {user.last_name}"
             )
         return Response({"message": "user registered"}, status=200)

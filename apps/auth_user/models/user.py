@@ -1,7 +1,14 @@
+import string
+import random
+from uuid import uuid4
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth.hashers import make_password
-from uuid import uuid4
+
+
+def generate_password(length=9):
+    letters = string.ascii_lowercase
+    return "".join(random.choice(letters) for i in range(length))
 
 
 class UserManager(BaseUserManager):
@@ -48,9 +55,7 @@ class User(AbstractUser):
         return str(self.email)
 
     def get_user_roles(self):
-        roles = []
-        if hasattr(self, "userroles_set"):
-            roles = [obj.role for obj in self.userroles_set.all()]
+        roles = [obj.role for obj in self.roles.all()]
         return roles
 
     def has_role(self, role):
@@ -63,7 +68,7 @@ class UserRoles(models.Model):
         SELLER = "seller", "Seller"
         CUSTOMER = "customer", "Customer"
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="roles")
     role = models.CharField(
         max_length=20,
         choices=RoleChoices.choices,

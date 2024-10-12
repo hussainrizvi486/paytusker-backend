@@ -9,6 +9,7 @@ from .api import (
 )
 from .api.product import ProductsApi, ProductCategory, ProductAPIView
 from .api.cart import CartApi
+from .api.seller.register import SellerProfileRequestViewSet
 from .api.order import OrderApi, CustomerFunctions
 from .api.customer.order import CustomerCheckout, CustomerOrderViewSet
 from .api.customer.reviews import CustomerOrderReviewView
@@ -37,6 +38,10 @@ customer_urls = [
 ]
 
 seller_api = [
+    path(
+        "api/seller/request-profile",
+        SellerProfileRequestViewSet.as_view({"get": "list", "post": "create"}),
+    ),
     path("api/seller/product/list", ListSellerProducts.as_view()),
     path(
         "api/seller/order/digital",

@@ -1,0 +1,80 @@
+{% load static %}
+<title>Account Approved</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        padding: 20px;
+    }
+
+    .container {
+        background-color: #ffffff;
+        border: 1px solid #dddddd;
+        border-radius: 10px;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        text-align: center;
+        background-color: #f51582;
+        color: white;
+        padding: 10px 0;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .content {
+        padding: 20px;
+    }
+
+    .content h2 {
+        color: #f51582;
+    }
+
+    .content p {
+        line-height: 1.6;
+    }
+
+    .button {
+        display: inline-block;
+        background-color: #f51582;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        margin-top: 20px;
+    }
+
+    .footer {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #999;
+    }
+</style>
+
+<div class="container">
+    <div class="header">
+        <h1>Welcome to PayTusker!</h1>
+    </div>
+    <div class="content">
+        <h2>Your Account Has Been Approved</h2>
+        <p>Dear {{ full_name }},</p>
+        <p>We are excited to inform you that your account request has been successfully approved! You can now log in and
+            start using your account.</p>
+
+        <h3>Your Account Details:</h3>
+        <p><strong>Email:</strong> {{ user_email }}</p>
+        <p><strong>Password:</strong> {{ user_password }}</p>
+        <a href="https://paytusker.com/login" class="button">Login to Your Account</a>
+        <p>If you have any questions, feel free to reply to this email or contact our support team.</p>
+    </div>
+
+    <div class="footer">
+        <p>Thank you for choosing PayTusker! We look forward to working with you.</p>
+        <p>&copy; 2024 PayTusker, All rights reserved.</p>
+    </div>
+</div>
